@@ -911,7 +911,7 @@ class SnapStream {
       hello.mac = "00:00:00:00:00:00";
       hello.arch = "web";
       hello.os = navigator.platform;
-      hello.hostname = "Snapweb client";
+      hello.hostname = "Iris Snapweb client";
       hello.uniqueId = getPersistentValue("uniqueId", uuidv4());
       this.sendMessage(hello);
       this.syncTime();
