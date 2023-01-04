@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import get from 'lodash/get';
+import { get } from 'lodash';
 import dictionaries from './dictionaries';
 import { titleCase } from '../util/helpers';
 
