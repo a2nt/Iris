@@ -1,7 +1,6 @@
 /* eslint-disable max-classes-per-file */
 // Modified for Iris
 // Original source https://github.com/badaix/snapcast
-const Flac = window.Flac; //require('libflacjs/dist/libflac.js');
 
 // declare window.webkitAudioContext for the ts compiler
 interface Window {
