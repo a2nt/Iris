@@ -1,8 +1,9 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import * as coreActions from '../services/core/actions';
-import { SnapStream } from './SnapStream.tsx';
+import React from "react";
+import { connect } from "react-redux";
+import { bindActionCreators } from "redux";
+import * as coreActions from "../services/core/actions";
+import { SnapStream } from "./SnapStream.tsx";
+import loadJS from "load-js";
 
 class Stream extends React.Component {
   constructor(props) {
@@ -14,58 +15,49 @@ class Stream extends React.Component {
   }
 
   start = () => {
-    const {
-      host,
-      port,
-      ssl,
-    } = this.props;
+    const { host, port, ssl } = this.props;
 
     if (this.snapstream) {
       this.snapstream.play();
     } else {
-      const baseUrl = `${ssl ? 'wss' : 'ws'}://${host}:${port}`;
+      const baseUrl = `${ssl ? "wss" : "ws"}://${host}:${port}`;
       this.snapstream = new SnapStream(baseUrl);
     }
-  }
+  };
 
   stop = () => {
     if (this.snapstream) {
       this.snapstream.stop();
       this.snapstream = null;
     }
-  }
+  };
 
-  componentDidUpdate = ({
-    streaming_enabled: prevStreamingEnabled,
-  }) => {
-    const {
-      enabled,
-      streaming_enabled,
-    } = this.props;
+  componentDidUpdate = ({ streaming_enabled: prevStreamingEnabled }) => {
+    const { enabled, streaming_enabled } = this.props;
 
     if (!prevStreamingEnabled && enabled && streaming_enabled) {
-      this.start();
+      const obj = this;
+
+      console.log("Loading libflac.min.js");
+
+      loadJS("libflac.min.js", (e) => {
+        console.log(e);
+        console.log("libflac is loaded");
+        obj.start();
+      });
     }
     if (!enabled || !streaming_enabled) {
       this.stop();
     }
-  }
+  };
 
   render = () => null;
 }
 
 const mapStateToProps = (state) => {
   const {
-    snapcast: {
-      enabled,
-      streaming_enabled,
-      host,
-      port,
-      ssl,
-    },
-    pusher: {
-      username,
-    },
+    snapcast: { enabled, streaming_enabled, host, port, ssl },
+    pusher: { username },
   } = state;
 
   return {

@@ -1,30 +1,22 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import TextField from './Fields/TextField';
-import SnapcastGroups from './SnapcastGroups';
-import * as uiActions from '../services/ui/actions';
-import * as actions from '../services/snapcast/actions';
-import { I18n } from '../locale';
+import React from "react";
+import { connect } from "react-redux";
+import { bindActionCreators } from "redux";
+import TextField from "./Fields/TextField";
+import SnapcastGroups from "./SnapcastGroups";
+import * as uiActions from "../services/ui/actions";
+import * as actions from "../services/snapcast/actions";
+import { I18n } from "../locale";
 
 const Snapcast = (props) => {
   const {
     actions,
     show_disconnected_clients,
     uiActions,
-    snapcast: {
-      host,
-      port,
-      ssl,
-      enabled,
-      streaming_enabled,
-      connected,
-    },
+    snapcast: { host, port, ssl, enabled, streaming_enabled, connected },
   } = props;
 
   return (
     <div className="snapcast">
-
       <div className="field checkbox">
         <div className="name">
           <I18n path="snapcast.enabled" />
@@ -58,7 +50,12 @@ const Snapcast = (props) => {
               type="checkbox"
               name="show_disconnected_clients"
               checked={show_disconnected_clients}
-              onChange={() => uiActions.set({ snapcast_show_disconnected_clients: !show_disconnected_clients })}
+              onChange={() =>
+                uiActions.set({
+                  snapcast_show_disconnected_clients:
+                    !show_disconnected_clients,
+                })
+              }
             />
             <span className="label">
               <I18n path="snapcast.show_disconnected_clients" />
@@ -113,7 +110,7 @@ const Snapcast = (props) => {
                 <I18n path="snapcast.encryption.description" />
               </span>
             </span>
-            {!ssl && window.location.protocol === 'https:' && (
+            {!ssl && window.location.protocol === "https:" && (
               <span className="red-text">
                 <I18n path="snapcast.encryption.incompatible" />
               </span>
@@ -129,11 +126,10 @@ const Snapcast = (props) => {
 
 const mapStateToProps = (state) => ({
   snapcast: state.snapcast,
-  show_disconnected_clients: (
+  show_disconnected_clients:
     state.ui.snapcast_show_disconnected_clients !== undefined
       ? state.ui.snapcast_show_disconnected_clients
-      : false
-  ),
+      : false,
 });
 
 const mapDispatchToProps = (dispatch) => ({

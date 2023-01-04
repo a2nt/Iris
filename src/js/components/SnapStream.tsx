@@ -1,8 +1,7 @@
 /* eslint-disable max-classes-per-file */
 // Modified for Iris
 // Original source https://github.com/badaix/snapcast
-const loadJS = require("load-js");
-let Flac = window.Flac;
+const Flac = window.Flac; //require('libflacjs/dist/libflac.js');
 
 // declare window.webkitAudioContext for the ts compiler
 interface Window {
@@ -676,7 +675,6 @@ class OpusDecoder extends Decoder {
 class FlacDecoder extends Decoder {
   constructor() {
     super();
-
     this.decoder = Flac.create_libflac_decoder(true);
     if (this.decoder) {
       let init_status = Flac.init_decoder_stream(
@@ -936,13 +934,7 @@ class SnapStream {
       let codec = new CodecMessage(msg.data);
       // console.log("Codec: " + codec.codec);
       if (codec.codec == "flac") {
-        console.log("Loading libflac.min.js");
-        loadJS("libflac.min.js").then(() => {
-          Flac.on("ready", function (event) {
-            Flac = event.target;
-            this.decoder = new FlacDecoder();
-          });
-        });
+        this.decoder = new FlacDecoder();
       } else if (codec.codec == "pcm") {
         this.decoder = new PcmDecoder();
       } else if (codec.codec == "opus") {
