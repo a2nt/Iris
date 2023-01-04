@@ -11,7 +11,6 @@
   "main": "app.js",
   "dependencies": {
     "@sentry/browser": "7.5.0",
-    "dabbyjs": "^0.9.15",
     "history": "5.3.0",
     "jquery": "3.6.0",
     "libflacjs": "^5.4.0",
