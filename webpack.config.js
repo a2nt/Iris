@@ -3,7 +3,9 @@ const isDevServer = process.env.WEBPACK_DEV_SERVER;
 const path = require('path');
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const fs = require('fs');
 let version = fs.readFileSync("IRIS_VERSION", "utf8");
@@ -88,11 +90,11 @@ const config = {
     ],
   },
   plugins: [
-    new webpack.ProvidePlugin({
+    /*new webpack.ProvidePlugin({
       $: "jquery",
       jQuery: "jquery",
       "window.jQuery": "jquery",
-    }),
+    }),*/
     new MiniCssExtractPlugin({
       filename: `app${isDev ? '' : '.min'}.css`,
     }),
@@ -106,6 +108,36 @@ const config = {
         build,
       },
     }),
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      openAnalyzer: false,
+    }),
+    new CssMinimizerPlugin({
+        parallel: true,
+        minimizerOptions: [{
+            preset: [
+                'default',
+                {
+                    discardComments: {
+                        removeAll: true,
+                      },
+                    zindex: true,
+                    cssDeclarationSorter: true,
+                    reduceIdents: false,
+                    mergeIdents: true,
+                    mergeRules: true,
+                    mergeLonghand: true,
+                    discardUnused: true,
+                    discardOverridden: true,
+                    discardDuplicates: true,
+                  },
+            ],
+          }, ],
+        minify: [
+            CssMinimizerPlugin.cssnanoMinify,
+            //CssMinimizerPlugin.cleanCssMinify,
+        ],
+      }),
   ],
   watchOptions: {
     poll: true,
