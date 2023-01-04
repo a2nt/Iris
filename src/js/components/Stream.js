@@ -16,7 +16,6 @@ class Stream extends React.Component {
 
       loadJS("libflac.min.js").then(() => {
         window.Flac.on("ready", (e) => {
-          window.Flac = e.target;
           console.log("libflac is loaded");
           obj.start();
         });
@@ -52,7 +51,6 @@ class Stream extends React.Component {
 
       loadJS("libflac.min.js").then(() => {
         window.Flac.on("ready", (e) => {
-          window.Flac = e.target;
           console.log("libflac is loaded");
           obj.start();
         });
