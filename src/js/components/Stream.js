@@ -15,8 +15,11 @@ class Stream extends React.Component {
       console.log("Loading libflac.min.js");
 
       loadJS("libflac.min.js").then(() => {
-        console.log("libflac is loaded");
-        obj.start();
+        window.Flac.on("ready", (e) => {
+          window.Flac = e.target;
+          console.log("libflac is loaded");
+          obj.start();
+        });
       });
     }
   }
@@ -48,8 +51,11 @@ class Stream extends React.Component {
       console.log("Loading libflac.min.js");
 
       loadJS("libflac.min.js").then(() => {
-        console.log("libflac is loaded");
-        obj.start();
+        window.Flac.on("ready", (e) => {
+          window.Flac = e.target;
+          console.log("libflac is loaded");
+          obj.start();
+        });
       });
     }
     if (!enabled || !streaming_enabled) {
