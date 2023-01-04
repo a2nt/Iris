@@ -43,9 +43,12 @@ export default class DropdownField extends React.Component {
   }
 
   handleClick(e) {
+    const el = e.target;
+    const dropdown = el.closest(".dropdown-field");
+
     if (
-      e.target.closest(".dropdown-field").getAttribute("data-uid") !=
-        this.uid &&
+      dropdown &&
+      dropdown.getAttribute("data-uid") != this.uid &&
       this.state.expanded
     ) {
       this.setExpanded(false);
