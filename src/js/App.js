@@ -1,6 +1,3 @@
-// TO-DO: remove it when u will get rid from jQuery
-import $ from "dabbyjs/src/core/dabby/dabby.js"; // update to reference where you have the project stored
-
 import React, { useState, useEffect } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";

@@ -1,45 +1,42 @@
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = process.env.NODE_ENV !== "production";
 const isDevServer = process.env.WEBPACK_DEV_SERVER;
-const path = require('path');
-const webpack = require('webpack');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const path = require("path");
+const webpack = require("webpack");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const BundleAnalyzerPlugin =
+  require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
-const fs = require('fs');
+const fs = require("fs");
 let version = fs.readFileSync("IRIS_VERSION", "utf8");
-version = version.replace(/\r?\n?/g, '').trim();
+version = version.replace(/\r?\n?/g, "").trim();
 const build = Math.floor(Date.now() / 1000);
 
 const config = {
   mode: process.env.NODE_ENV,
   context: path.resolve(__dirname),
-  entry: ['@babel/polyfill', './src/js/index'],
+  entry: ["@babel/polyfill", "./src/js/index"],
   output: {
-    path: path.resolve(__dirname, 'mopidy_iris/static'),
-    filename: `app${isDev ? '' : '.min'}.js`,
+    path: path.resolve(__dirname, "mopidy_iris/static"),
+    filename: `app${isDev ? "" : ".min"}.js`,
   },
   module: {
     rules: [
       {
-        test: require.resolve('jquery'),
-        exclude: [
-          /node_modules/,
-        ],
-        use: [
-          'expose-loader?jQuery!expose?$',
-        ],
+        test: require.resolve("jquery"),
+        exclude: [/node_modules/],
+        use: ["expose-loader?jQuery!expose?$"],
       },
       {
         test: /.(jsx|js|ts|tsx)$/,
         exclude: /node_modules/,
         resolve: {
-          extensions: [".js", ".jsx", ".ts", ".tsx"]
+          extensions: [".js", ".jsx", ".ts", ".tsx"],
         },
         use: [
           {
-            loader: 'babel-loader',
+            loader: "babel-loader",
           },
         ],
       },
@@ -49,44 +46,42 @@ const config = {
           {
             loader: MiniCssExtractPlugin.loader,
             options: {
-              publicPath: './',
+              publicPath: "./",
             },
           },
-          'css-loader',
-          'sass-loader',
+          "css-loader",
+          "sass-loader",
         ],
       },
       {
         test: /\.ya?ml$/,
-        type: 'json',
+        type: "json",
         use: {
-          loader: 'yaml-loader',
-          options: { json: true, type: 'json' }
-        }
+          loader: "yaml-loader",
+          options: { json: true, type: "json" },
+        },
       },
       {
         // load external resources (ie Google fonts)
         test: /.(gif|png|woff(2)?|eot|ttf|svg)(\?[a-z0-9=\.]+)?$/,
-        type: 'asset/resource',
+        type: "asset/resource",
         generator: {
-          filename: 'assets/[name][ext]',
+          filename: "assets/[name][ext]",
         },
       },
-      (isDev ? {} : {
-        test: /\.(js|jsx)$/,
-        use: [
-          {
-            loader: 'webpack-strip',
-            options: {
-              strip: [
-                'console.log',
-                'console.info',
-                'debug',
-              ],
-            },
+      isDev
+        ? {}
+        : {
+            test: /\.(js|jsx)$/,
+            use: [
+              {
+                loader: "webpack-strip",
+                options: {
+                  strip: ["console.log", "console.info", "debug"],
+                },
+              },
+            ],
           },
-        ],
-      }),
     ],
   },
   plugins: [
@@ -96,53 +91,55 @@ const config = {
       "window.jQuery": "jquery",
     }),*/
     new MiniCssExtractPlugin({
-      filename: `app${isDev ? '' : '.min'}.css`,
+      filename: `app${isDev ? "" : ".min"}.css`,
     }),
     new HtmlWebpackPlugin({
       inject: false,
-      template: './src/index.html',
+      template: "./src/index.html",
       templateParameters: {
         isDevServer: isDevServer ? 1 : 0,
-        baseHref: isDevServer ? '/' : '/iris/',
-        version: `${version}-${isDevServer ? 'DEV_SERVER' : ''}`,
+        baseHref: isDevServer ? "/" : "/iris/",
+        version: `${version}-${isDevServer ? "DEV_SERVER" : ""}`,
         build,
       },
     }),
     new BundleAnalyzerPlugin({
-      analyzerMode: 'static',
+      analyzerMode: "static",
       openAnalyzer: false,
     }),
     new CssMinimizerPlugin({
-        parallel: true,
-        minimizerOptions: [{
-            preset: [
-                'default',
-                {
-                    discardComments: {
-                        removeAll: true,
-                      },
-                    zindex: true,
-                    cssDeclarationSorter: true,
-                    reduceIdents: false,
-                    mergeIdents: true,
-                    mergeRules: true,
-                    mergeLonghand: true,
-                    discardUnused: true,
-                    discardOverridden: true,
-                    discardDuplicates: true,
-                  },
-            ],
-          }, ],
-        minify: [
-            CssMinimizerPlugin.cssnanoMinify,
-            //CssMinimizerPlugin.cleanCssMinify,
-        ],
-      }),
+      parallel: true,
+      minimizerOptions: [
+        {
+          preset: [
+            "default",
+            {
+              discardComments: {
+                removeAll: true,
+              },
+              zindex: true,
+              cssDeclarationSorter: true,
+              reduceIdents: false,
+              mergeIdents: true,
+              mergeRules: true,
+              mergeLonghand: true,
+              discardUnused: true,
+              discardOverridden: true,
+              discardDuplicates: true,
+            },
+          ],
+        },
+      ],
+      minify: [
+        CssMinimizerPlugin.cssnanoMinify,
+        //CssMinimizerPlugin.cleanCssMinify,
+      ],
+    }),
   ],
   watchOptions: {
     poll: true,
   },
-  devtool: (isDev ? 'source-map' : false),
+  devtool: isDev ? "source-map" : false,
   devServer: {
     historyApiFallback: true,
     port: 6681,
@@ -151,8 +148,8 @@ const config = {
     },
     static: [
       {
-        directory: path.join(__dirname, 'mopidy_iris', 'static', 'assets'),
-        publicPath: '/assets/',
+        directory: path.join(__dirname, "mopidy_iris", "static", "assets"),
+        publicPath: "/assets/",
       },
     ],
   },

@@ -1,6 +1,6 @@
-import React from 'react';
-import Icon from '../Icon';
-import { removeDuplicates } from '../../util/arrays';
+import React from "react";
+import Icon from "../Icon";
+import { removeDuplicates } from "../../util/arrays";
 
 export default class DropdownField extends React.Component {
   constructor(props) {
@@ -8,7 +8,7 @@ export default class DropdownField extends React.Component {
 
     // Create a "unique" id. This is human-controlled to avoid requiring
     // other libraries for a very simple purpose: clicking outside
-    this.uid = this.props.name.replace(' ', '_').toLowerCase();
+    this.uid = this.props.name.replace(" ", "_").toLowerCase();
     if (this.props.uid) {
       this.uid += `_${this.props.uid}`;
     }
@@ -22,20 +22,20 @@ export default class DropdownField extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener('click', this.handleClick, false);
+    window.addEventListener("click", this.handleClick, false);
   }
 
   componentWillUnmount() {
-    window.removeEventListener('click', this.handleClick, false);
+    window.removeEventListener("click", this.handleClick, false);
   }
 
   setExpanded(expanded = !this.state.expanded) {
     if (expanded) {
       this.setState({ expanded, changed: false });
-      window.addEventListener('click', this.handleClick, false);
+      window.addEventListener("click", this.handleClick, false);
     } else {
       this.setState({ expanded });
-      window.removeEventListener('click', this.handleClick, false);
+      window.removeEventListener("click", this.handleClick, false);
       if (this.props.onClose && this.state.changed) {
         this.props.onClose();
       }
@@ -43,8 +43,11 @@ export default class DropdownField extends React.Component {
   }
 
   handleClick(e) {
-    // TODO: remove dependency on jQuery and explore the performance of this functionality
-    if ($(e.target).closest('.dropdown-field').attr('data-uid') != this.uid && this.state.expanded) {
+    if (
+      e.target.closest(".dropdown-field").getAttribute("data-uid") !=
+        this.uid &&
+      this.state.expanded
+    ) {
       this.setExpanded(false);
     }
   }
@@ -54,7 +57,7 @@ export default class DropdownField extends React.Component {
     this.setState({ changed: true });
 
     if (this.isMultiSelect()) {
-      if (value == 'select-all') {
+      if (value == "select-all") {
         var new_value = [];
         for (let i = 0; i < this.props.options.length; i++) {
           new_value.push(this.props.options[i].value);
@@ -83,10 +86,7 @@ export default class DropdownField extends React.Component {
   }
 
   selectedOptions() {
-    const {
-      options: optionsProp,
-      value,
-    } = this.props;
+    const { options: optionsProp, value } = this.props;
     let selectedOptions = [];
 
     if (optionsProp) {
@@ -97,11 +97,15 @@ export default class DropdownField extends React.Component {
         for (const multiSelectValue of value) {
           selectedOptions = [
             ...selectedOptions,
-            ...optionsProp.filter((option) => option.value === multiSelectValue),
+            ...optionsProp.filter(
+              (option) => option.value === multiSelectValue
+            ),
           ];
         }
       } else {
-        selectedOptions = optionsProp.filter((option) => option.value === value);
+        selectedOptions = optionsProp.filter(
+          (option) => option.value === value
+        );
       }
     }
 
@@ -114,7 +118,7 @@ export default class DropdownField extends React.Component {
       no_status_icon,
       no_label,
       button,
-      className: classNameProp = '',
+      className: classNameProp = "",
       name,
       value,
       icon,
@@ -132,17 +136,17 @@ export default class DropdownField extends React.Component {
     const options = Object.assign([], optionsProp);
     if (this.isMultiSelect()) {
       options.push({
-        value: 'select-all',
-        label: 'Select all',
-        className: 'mid_grey-text',
+        value: "select-all",
+        label: "Select all",
+        className: "mid_grey-text",
       });
     }
 
     let className = `dropdown-field ${classNameProp}`;
-    if (expanded) className += ' dropdown-field--expanded';
-    if (no_status_icon) className += ' dropdown-field--no-status-icon';
-    if (no_label) className += ' dropdown-field--no-label';
-    if (button) className += ' dropdown-field--buttonify';
+    if (expanded) className += " dropdown-field--expanded";
+    if (no_status_icon) className += " dropdown-field--no-status-icon";
+    if (no_label) className += " dropdown-field--no-label";
+    if (button) className += " dropdown-field--buttonify";
 
     let selected_icon = <Icon name="check" />;
     if (selectedIconProp) {
@@ -151,37 +155,42 @@ export default class DropdownField extends React.Component {
 
     return (
       <div className={className} data-uid={this.uid}>
-        <div className={`dropdown-field__label${button ? ` button ${button}` : ''}`} onClick={(e) => this.setExpanded()}>
-          {icon ? <Icon name={icon} type={icon_type || 'material'} /> : null}
+        <div
+          className={`dropdown-field__label${
+            button ? ` button ${button}` : ""
+          }`}
+          onClick={(e) => this.setExpanded()}
+        >
+          {icon ? <Icon name={icon} type={icon_type || "material"} /> : null}
           {!noLabel && (
             <span className="text">
               <span className="dropdown-field__label__value">
-                {valueAsLabel && selectedOptions.length === 1 ? selectedOptions[0].label : name}
+                {valueAsLabel && selectedOptions.length === 1
+                  ? selectedOptions[0].label
+                  : name}
               </span>
-              <span className="dropdown-field__label__name">
-                {name}
-              </span>
+              <span className="dropdown-field__label__name">{name}</span>
               {this.isMultiSelect() ? ` (${selectedOptions.length})` : null}
             </span>
           )}
         </div>
         <div className="dropdown-field__options">
           <div className="dropdown-field__options__liner">
-            {
-							options.map((option) => {
-							  const is_selected = selectedOptions.includes(option);
-							  return (
-  <div
-    className={`dropdown-field__options__item ${option.className ? option.className : ''}`}
-    key={option.value}
-    onClick={(e) => this.handleChange(option.value, is_selected)}
-  >
-    {!no_status_icon && is_selected && selected_icon}
-    {option.label}
-  </div>
-							  );
-							})
-						}
+            {options.map((option) => {
+              const is_selected = selectedOptions.includes(option);
+              return (
+                <div
+                  className={`dropdown-field__options__item ${
+                    option.className ? option.className : ""
+                  }`}
+                  key={option.value}
+                  onClick={(e) => this.handleChange(option.value, is_selected)}
+                >
+                  {!no_status_icon && is_selected && selected_icon}
+                  {option.label}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
