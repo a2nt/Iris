@@ -7,6 +7,7 @@ const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const BundleAnalyzerPlugin =
   require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+const TerserPlugin = require("terser-webpack-plugin");
 
 const fs = require("fs");
 let version = fs.readFileSync("IRIS_VERSION", "utf8");
@@ -20,6 +21,43 @@ const config = {
   output: {
     path: path.resolve(__dirname, "mopidy_iris/static"),
     filename: `app${isDev ? "" : ".min"}.js`,
+  },
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          module: false,
+          parse: {
+            ecma: 8,
+          },
+          compress: {
+            ecma: 6,
+            warnings: false,
+            // Disabled because of an issue with Uglify breaking seemingly valid code:
+            // https://github.com/facebook/create-react-app/issues/2376
+            // Pending further investigation:
+            // https://github.com/mishoo/UglifyJS2/issues/2011
+            comparisons: false,
+          },
+          keep_fnames: true,
+          keep_classnames: true,
+          mangle: {
+            safari10: false,
+            keep_fnames: true,
+            keep_classnames: true,
+            reserved: ["$", "jQuery", "jquery"],
+          },
+          output: {
+            ecma: 6,
+            comments: false,
+            ascii_only: true,
+          },
+        },
+        // Use multi-process parallel running to improve the build speed
+        // Default number of concurrent runs: os.cpus().length - 1
+        parallel: true,
+      }),
+    ],
   },
   module: {
     rules: [
