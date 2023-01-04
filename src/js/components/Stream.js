@@ -10,7 +10,15 @@ class Stream extends React.Component {
     super(props);
 
     if (props.enabled && props.streaming_enabled) {
-      this.start();
+      const obj = this;
+
+      console.log("Loading libflac.min.js");
+
+      loadJS("libflac.min.js", (e) => {
+        console.log(e);
+        console.log("libflac is loaded");
+        obj.start();
+      });
     }
   }
 
