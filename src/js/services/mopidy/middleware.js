@@ -1698,7 +1698,7 @@ const MopidyMiddleware = (function () {
             // We may not have a raw_artist if the tracks' artist is not found (ie the requested
             // artist may be the albumartist).
             if (raw_artist) {
-              if (state.lastfm.enabled) {
+              if (state.lastfm.authorization) {
                 store.dispatch(
                   lastfmActions.getArtist(
                     artist.uri,
@@ -1889,7 +1889,7 @@ const MopidyMiddleware = (function () {
                   digestMopidyImages(store.getState().mopidy, images)
                 ),
               });
-            } else {
+            } else if (store.lastfm.authorization) {
               store.dispatch(lastfmActions.getImages(uri));
             }
           });
