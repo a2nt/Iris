@@ -1698,7 +1698,7 @@ const MopidyMiddleware = (function () {
             // We may not have a raw_artist if the tracks' artist is not found (ie the requested
             // artist may be the albumartist).
             if (raw_artist) {
-              if (state.lastfm.authorization) {
+              if (state.ui.allow_reporting) {
                 store.dispatch(
                   lastfmActions.getArtist(
                     artist.uri,
