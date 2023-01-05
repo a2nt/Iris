@@ -1710,8 +1710,10 @@ const MopidyMiddleware = (function () {
               // Load supprting information from LastFM and Discogs
               if (state.spotify.enabled) {
                 store.dispatch(spotifyActions.getArtistImages(artist));
-              } else {
-                //store.dispatch(discogsActions.getArtistImages(artist.uri, artist));
+              } else if (state.ui.allow_reporting) {
+                store.dispatch(
+                  discogsActions.getArtistImages(artist.uri, artist)
+                );
               }
             }
           }
