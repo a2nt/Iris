@@ -1,14 +1,14 @@
-import ReactGA from 'react-ga';
-import Mopidy from 'mopidy';
-import { sha256 } from 'js-sha256';
-import { sampleSize, compact, chunk, find, uniq } from 'lodash';
-import { i18n } from '../../locale';
+import ReactGA from "react-ga";
+import Mopidy from "mopidy";
+import { sha256 } from "js-sha256";
+import { sampleSize, compact, chunk, find, uniq } from "lodash";
+import { i18n } from "../../locale";
 import {
   generateGuid,
   uriSource,
   setFavicon,
   titleCase,
-} from '../../util/helpers';
+} from "../../util/helpers";
 import {
   digestMopidyImages,
   formatImages,
@@ -22,25 +22,25 @@ import {
   formatPlaylist,
   injectSortId,
   formatSimpleObject,
-} from '../../util/format';
+} from "../../util/format";
 import {
   arrayOf,
   shuffle,
   applyFilter,
   sortItems,
   indexToArray,
-} from '../../util/arrays';
-import { getProvider, getSortSelector } from '../../util/selectors';
+} from "../../util/arrays";
+import { getProvider, getSortSelector } from "../../util/selectors";
 
-const mopidyActions = require('./actions.js');
-const coreActions = require('../core/actions.js');
-const uiActions = require('../ui/actions.js');
-const spotifyActions = require('../spotify/actions.js');
-const pusherActions = require('../pusher/actions.js');
-const googleActions = require('../google/actions.js');
-const lastfmActions = require('../lastfm/actions.js');
-const geniusActions = require('../genius/actions.js');
-const discogsActions = require('../discogs/actions.js');
+const mopidyActions = require("./actions.js");
+const coreActions = require("../core/actions.js");
+const uiActions = require("../ui/actions.js");
+const spotifyActions = require("../spotify/actions.js");
+const pusherActions = require("../pusher/actions.js");
+const googleActions = require("../google/actions.js");
+const lastfmActions = require("../lastfm/actions.js");
+const geniusActions = require("../genius/actions.js");
+const discogsActions = require("../discogs/actions.js");
 
 /**
  * Fetch the method of our Mopidy API that is being called, by string
@@ -49,7 +49,7 @@ const discogsActions = require('../discogs/actions.js');
  * @param {Object} socket
  */
 const getController = (call, socket) => {
-  const callParts = call.split('.');
+  const callParts = call.split(".");
   const model = callParts[0];
   const method = callParts[1];
 
@@ -76,12 +76,12 @@ const MopidyMiddleware = (function () {
   const handleMessage = (ws, store, type, data) => {
     // if debug enabled
     if (store.getState().ui.log_mopidy) {
-      console.log('Mopidy', type, data);
+      console.log("Mopidy", type, data);
     }
 
     switch (type) {
-      case 'state:online':
-        store.dispatch({ type: 'MOPIDY_CONNECTED' });
+      case "state:online":
+        store.dispatch({ type: "MOPIDY_CONNECTED" });
 
         store.dispatch(mopidyActions.getCurrentTrack());
         store.dispatch(mopidyActions.getPlayState());
@@ -98,8 +98,8 @@ const MopidyMiddleware = (function () {
         // Every 10s update our play position (when playing)
         progress_interval = setInterval(() => {
           if (
-            store.getState().mopidy.play_state === 'playing'
-            && store.getState().ui.window_focus === true
+            store.getState().mopidy.play_state === "playing" &&
+            store.getState().ui.window_focus === true
           ) {
             store.dispatch(mopidyActions.getTimePosition());
           }
@@ -107,80 +107,74 @@ const MopidyMiddleware = (function () {
 
         break;
 
-      case 'state:offline':
-        store.dispatch({ type: 'MOPIDY_DISCONNECTED' });
+      case "state:offline":
+        store.dispatch({ type: "MOPIDY_DISCONNECTED" });
         store.dispatch(mopidyActions.clearCurrentTrack());
 
         // reset our playback interval timer
         clearInterval(progress_interval);
         break;
 
-      case 'event:tracklistChanged':
+      case "event:tracklistChanged":
         store.dispatch(mopidyActions.getQueue());
 
         // Wait a jiffy before we get the next track
         // We don't want to impede snappyness for this luxury request
-        setTimeout(
-          () => {
-            store.dispatch(mopidyActions.getNextTrack());
-          },
-          1000,
-        );
+        setTimeout(() => {
+          store.dispatch(mopidyActions.getNextTrack());
+        }, 1000);
         break;
 
-      case 'event:playbackStateChanged':
+      case "event:playbackStateChanged":
         store.dispatch({
-          type: 'MOPIDY_PLAY_STATE',
+          type: "MOPIDY_PLAY_STATE",
           play_state: data.new_state,
         });
         store.dispatch(mopidyActions.getTimePosition());
         break;
 
-      case 'event:seeked':
+      case "event:seeked":
         store.dispatch({
-          type: 'MOPIDY_TIME_POSITION',
+          type: "MOPIDY_TIME_POSITION",
           time_position: data.time_position,
         });
         break;
 
-      case 'event:trackPlaybackEnded':
+      case "event:trackPlaybackEnded":
         store.dispatch(mopidyActions.clearCurrentTrack());
         store.dispatch({
-          type: 'MOPIDY_TIME_POSITION',
+          type: "MOPIDY_TIME_POSITION",
           time_position: 0,
         });
         break;
 
-      case 'event:trackPlaybackStarted':
+      case "event:trackPlaybackStarted":
         if (data.tl_track) {
           store.dispatch(mopidyActions.currentTrackLoaded(data.tl_track));
 
           // Wait a jiffy before we get the next track
           // We don't want to impede snappyness for this luxury request
-          setTimeout(
-            () => {
-              store.dispatch(mopidyActions.getNextTrack());
-            },
-            1000,
-          );
+          setTimeout(() => {
+            store.dispatch(mopidyActions.getNextTrack());
+          }, 1000);
         }
         break;
 
-      case 'event:volumeChanged':
-        store.dispatch({ type: 'MOPIDY_VOLUME', volume: data.volume });
+      case "event:volumeChanged":
+        store.dispatch({ type: "MOPIDY_VOLUME", volume: data.volume });
         break;
 
-      case 'event:muteChanged':
-        store.dispatch({ type: 'MOPIDY_MUTE', mute: data.mute });
+      case "event:muteChanged":
+        store.dispatch({ type: "MOPIDY_MUTE", mute: data.mute });
         break;
 
-      case 'event:optionsChanged':
+      case "event:optionsChanged":
         store.dispatch(mopidyActions.getConsume());
         store.dispatch(mopidyActions.getRandom());
         store.dispatch(mopidyActions.getRepeat());
         break;
 
-      case 'event:streamTitleChanged':
+      case "event:streamTitleChanged":
         store.dispatch(coreActions.streamTitleChanged(data.title));
         break;
 
@@ -198,25 +192,24 @@ const MopidyMiddleware = (function () {
    * @param string value (optional) = value of the property to pass
    * @return promise
    * */
-  const request = (store, call, value = {}) => new Promise((resolve, reject) => {
-    const loaderId = generateGuid();
-    const loaderKey = `mopidy_${call}_${value?.uri || ''}_${value?.uris?.join('_') || ''}`;
-    store.dispatch(uiActions.startLoading(loaderId, loaderKey));
+  const request = (store, call, value = {}) =>
+    new Promise((resolve, reject) => {
+      const loaderId = generateGuid();
+      const loaderKey = `mopidy_${call}_${value?.uri || ""}_${
+        value?.uris?.join("_") || ""
+      }`;
+      store.dispatch(uiActions.startLoading(loaderId, loaderKey));
 
-    const doRequest = () => {
-      const controller = getController(call, socket);
+      const doRequest = () => {
+        const controller = getController(call, socket);
 
-      if (controller) {
-        const timeout = setTimeout(
-          () => {
+        if (controller) {
+          const timeout = setTimeout(() => {
             store.dispatch(uiActions.stopLoading(loaderId));
-            reject(new Error('Request timed out'));
-          },
-          30000,
-        );
+            reject(new Error("Request timed out"));
+          }, 30000);
 
-        controller(value)
-          .then(
+          controller(value).then(
             (response) => {
               clearTimeout(timeout);
               store.dispatch(uiActions.stopLoading(loaderId));
@@ -226,30 +219,30 @@ const MopidyMiddleware = (function () {
               clearTimeout(timeout);
               store.dispatch(uiActions.stopLoading(loaderId));
               reject(error);
-            },
+            }
           );
-      } else {
-        store.dispatch(uiActions.stopLoading(loaderId));
-        console.warn(
-          'Mopidy request aborted. Either Mopidy is not connected or the request method is invalid. Check the request and your server settings.',
-          {
-            call, value, socket, controller,
-          },
-        );
-      }
-    };
+        } else {
+          store.dispatch(uiActions.stopLoading(loaderId));
+          console.warn(
+            "Mopidy request aborted. Either Mopidy is not connected or the request method is invalid. Check the request and your server settings.",
+            {
+              call,
+              value,
+              socket,
+              controller,
+            }
+          );
+        }
+      };
 
-    // Give a 5-second leeway for allowing Mopidy to connect, if it isn't already connected
-    if (socket && store.getState().mopidy.connected) {
-      doRequest();
-    } else {
-      console.info('Mopidy not yet connected, waiting 2 seconds');
-      setTimeout(
-        () => doRequest(),
-        2000,
-      );
-    }
-  });
+      // Give a 5-second leeway for allowing Mopidy to connect, if it isn't already connected
+      if (socket && store.getState().mopidy.connected) {
+        doRequest();
+      } else {
+        console.info("Mopidy not yet connected, waiting 2 seconds");
+        setTimeout(() => doRequest(), 2000);
+      }
+    });
 
   /**
    * Process our search queries queue. We process one item in the queue and then
@@ -264,30 +257,26 @@ const MopidyMiddleware = (function () {
       term,
       requestType,
       uri_scheme,
-      method = 'library.search',
+      method = "library.search",
       data,
     } = queue.shift();
-    const processKey = 'MOPIDY_GET_SEARCH_RESULTS';
+    const processKey = "MOPIDY_GET_SEARCH_RESULTS";
     const processor = store.getState().ui.processes[processKey];
 
-    if (processor && processor.status === 'cancelling') {
-      store.dispatch(uiActions.processCancelled('MOPIDY_GET_SEARCH_RESULTS'));
+    if (processor && processor.status === "cancelling") {
+      store.dispatch(uiActions.processCancelled("MOPIDY_GET_SEARCH_RESULTS"));
       return;
     }
 
-    store.dispatch(uiActions.updateProcess(
-      processKey,
-      {
-        content: i18n(
-          'services.mopidy.searching',
-          {
-            provider: titleCase(uri_scheme.replace(':', '')),
-            type: requestType,
-          },
-        ),
+    store.dispatch(
+      uiActions.updateProcess(processKey, {
+        content: i18n("services.mopidy.searching", {
+          provider: titleCase(uri_scheme.replace(":", "")),
+          type: requestType,
+        }),
         remaining: queue.length,
-      },
-    ));
+      })
+    );
 
     // Each type has a different method of formatting and destructuring.
     const processResults = {
@@ -346,12 +335,10 @@ const MopidyMiddleware = (function () {
         return indexToArray(artists);
       },
       playlists: (response) => {
-        const playlists = response.filter(
-          (item) => {
-            if (!item.uri.includes(uri_scheme)) return false;
-            return item.name.toLowerCase().includes(term.toLowerCase());
-          },
-        );
+        const playlists = response.filter((item) => {
+          if (!item.uri.includes(uri_scheme)) return false;
+          return item.name.toLowerCase().includes(term.toLowerCase());
+        });
         return playlists.map((playlist) => ({
           ...formatPlaylist(playlist),
           uri: playlist.uri,
@@ -363,27 +350,23 @@ const MopidyMiddleware = (function () {
       },
     };
 
-    request(
-      store,
-      method,
-      data,
-    ).then(
-      (response) => {
-        if (response.length > 0) {
-          store.dispatch(coreActions.searchResultsLoaded(
+    request(store, method, data).then((response) => {
+      if (response.length > 0) {
+        store.dispatch(
+          coreActions.searchResultsLoaded(
             { term, type },
             requestType,
-            processResults[requestType](response),
-          ));
-        }
+            processResults[requestType](response)
+          )
+        );
+      }
 
-        if (queue.length) {
-          processSearchQueue(store, queue);
-        } else {
-          store.dispatch(uiActions.processFinished(processKey));
-        }
-      },
-    );
+      if (queue.length) {
+        processSearchQueue(store, queue);
+      } else {
+        store.dispatch(uiActions.processFinished(processKey));
+      }
+    });
   };
 
   /**
@@ -395,75 +378,100 @@ const MopidyMiddleware = (function () {
    * */
   return (store) => (next) => (action) => {
     switch (action.type) {
-      case 'MOPIDY_CONNECT': {
+      case "MOPIDY_CONNECT": {
         if (socket != null) socket.close();
 
-        store.dispatch({ type: 'MOPIDY_CONNECTING' });
+        store.dispatch({ type: "MOPIDY_CONNECTING" });
         const { ssl, host, port } = store.getState().mopidy;
         try {
           socket = new Mopidy({
-            webSocketUrl: `ws${ssl ? 's' : ''}://${host}:${port}/mopidy/ws/`,
-            callingConvention: 'by-position-or-by-name',
+            webSocketUrl: `ws${ssl ? "s" : ""}://${host}:${port}/mopidy/ws/`,
+            callingConvention: "by-position-or-by-name",
           });
         } catch (exception) {
           console.error(exception);
           break;
         }
 
-        socket.on('state:online', (data) => handleMessage(socket, store, 'state:online', data));
-        socket.on('state:offline', (data) => handleMessage(socket, store, 'state:offline', data));
-        socket.on('event:tracklistChanged', (data) => handleMessage(socket, store, 'event:tracklistChanged', data));
-        socket.on('event:playbackStateChanged', (data) => handleMessage(socket, store, 'event:playbackStateChanged', data));
-        socket.on('event:seeked', (data) => handleMessage(socket, store, 'event:seeked', data));
-        socket.on('event:trackPlaybackEnded', (data) => handleMessage(socket, store, 'event:trackPlaybackEnded', data));
-        socket.on('event:trackPlaybackStarted', (data) => handleMessage(socket, store, 'event:trackPlaybackStarted', data));
-        socket.on('event:volumeChanged', (data) => handleMessage(socket, store, 'event:volumeChanged', data));
-        socket.on('event:muteChanged', (data) => handleMessage(socket, store, 'event:muteChanged', data));
-        socket.on('event:optionsChanged', (data) => handleMessage(socket, store, 'event:optionsChanged', data));
-        socket.on('event:streamTitleChanged', (data) => handleMessage(socket, store, 'event:streamTitleChanged', data));
+        socket.on("state:online", (data) =>
+          handleMessage(socket, store, "state:online", data)
+        );
+        socket.on("state:offline", (data) =>
+          handleMessage(socket, store, "state:offline", data)
+        );
+        socket.on("event:tracklistChanged", (data) =>
+          handleMessage(socket, store, "event:tracklistChanged", data)
+        );
+        socket.on("event:playbackStateChanged", (data) =>
+          handleMessage(socket, store, "event:playbackStateChanged", data)
+        );
+        socket.on("event:seeked", (data) =>
+          handleMessage(socket, store, "event:seeked", data)
+        );
+        socket.on("event:trackPlaybackEnded", (data) =>
+          handleMessage(socket, store, "event:trackPlaybackEnded", data)
+        );
+        socket.on("event:trackPlaybackStarted", (data) =>
+          handleMessage(socket, store, "event:trackPlaybackStarted", data)
+        );
+        socket.on("event:volumeChanged", (data) =>
+          handleMessage(socket, store, "event:volumeChanged", data)
+        );
+        socket.on("event:muteChanged", (data) =>
+          handleMessage(socket, store, "event:muteChanged", data)
+        );
+        socket.on("event:optionsChanged", (data) =>
+          handleMessage(socket, store, "event:optionsChanged", data)
+        );
+        socket.on("event:streamTitleChanged", (data) =>
+          handleMessage(socket, store, "event:streamTitleChanged", data)
+        );
 
         break;
       }
 
-      case 'MOPIDY_CONNECTED':
+      case "MOPIDY_CONNECTED":
         if (store.getState().ui.allow_reporting) {
           ReactGA.event({
-            category: 'Mopidy',
-            action: 'Connected',
+            category: "Mopidy",
+            action: "Connected",
             label: sha256(window.location.hostname),
           });
         }
         next(action);
         break;
 
-      case 'MOPIDY_DISCONNECT':
+      case "MOPIDY_DISCONNECT":
         if (socket != null) socket.close();
         socket = null;
-        store.dispatch({ type: 'MOPIDY_DISCONNECTED' });
+        store.dispatch({ type: "MOPIDY_DISCONNECTED" });
         break;
 
-      case 'MOPIDY_DISCONNECTED':
-        setFavicon('favicon_error.png');
+      case "MOPIDY_DISCONNECTED":
+        setFavicon("favicon_error.png");
         break;
 
-      case 'MOPIDY_DEBUG':
-        request(store, action.call, action.value)
-          .then((response) => {
-            store.dispatch({ type: 'DEBUG', response });
-          });
+      case "MOPIDY_DEBUG":
+        request(store, action.call, action.value).then((response) => {
+          store.dispatch({ type: "DEBUG", response });
+        });
         break;
 
-      case 'MOPIDY_UPDATE_SERVER':
+      case "MOPIDY_UPDATE_SERVER":
         const { servers } = store.getState().mopidy;
         const server = {
-          ...servers[action.server.id] || {},
+          ...(servers[action.server.id] || {}),
           ...action.server,
         };
-        server.url = `http${server.ssl ? 's' : ''}://${server.host}:${server.port}`;
-        store.dispatch(mopidyActions.updateServers({ ...servers, [server.id]: server }));
+        server.url = `http${server.ssl ? "s" : ""}://${server.host}:${
+          server.port
+        }`;
+        store.dispatch(
+          mopidyActions.updateServers({ ...servers, [server.id]: server })
+        );
         break;
 
-      case 'MOPIDY_SET_CURRENT_SERVER': {
+      case "MOPIDY_SET_CURRENT_SERVER": {
         const { server } = action;
         const { servers } = store.getState().mopidy;
         let existingServer = null;
@@ -480,59 +488,78 @@ const MopidyMiddleware = (function () {
           existingServer = create.server;
         }
 
-        store.dispatch(mopidyActions.set({
-          current_server: server.id || existingServer?.id,
-          host: server.host,
-          port: server.port,
-          ssl: server.ssl,
-          connected: false,
-          connecting: false,
-        }));
+        store.dispatch(
+          mopidyActions.set({
+            current_server: server.id || existingServer?.id,
+            host: server.host,
+            port: server.port,
+            ssl: server.ssl,
+            connected: false,
+            connecting: false,
+          })
+        );
 
         // Wait a moment for store to update, then attempt connection
-        setTimeout(
-          () => {
-            store.dispatch(mopidyActions.connect());
-            store.dispatch(pusherActions.connect());
-          },
-          250,
-        );
+        setTimeout(() => {
+          store.dispatch(mopidyActions.connect());
+          store.dispatch(pusherActions.connect());
+        }, 250);
         next(action);
         break;
       }
 
-      case 'MOPIDY_GET_SERVER_STATE': {
+      case "MOPIDY_GET_SERVER_STATE": {
         let server = { ...store.getState().mopidy.servers[action.id] };
-        if (!server.host || !server.port || server.host === '' || server.port === '') break;
+        if (
+          !server.host ||
+          !server.port ||
+          server.host === "" ||
+          server.port === ""
+        )
+          break;
 
-        const host = `http${server.ssl ? 's' : ''}://${server.host}:${server.port}`;
+        const host = `http${server.ssl ? "s" : ""}://${server.host}:${
+          server.port
+        }`;
         fetch(`${host}/iris/http/get_server_state`)
           .then((response) => response.json())
           .then(({ result }) => {
             server = { ...server, ...result };
             if (result.current_track) {
               const images = result.current_track.images
-                ? formatImages(digestMopidyImages(server, result.current_track.images))
+                ? formatImages(
+                    digestMopidyImages(server, result.current_track.images)
+                  )
                 : null;
-              server.current_track = formatTrack({ ...result.current_track, images });
+              server.current_track = formatTrack({
+                ...result.current_track,
+                images,
+              });
             }
             store.dispatch(mopidyActions.updateServer(server));
           })
           .catch((error) => {
-            store.dispatch(coreActions.handleException('Could not fetch server', error, host, false));
+            store.dispatch(
+              coreActions.handleException(
+                "Could not fetch server",
+                error,
+                host,
+                false
+              )
+            );
           });
 
         break;
       }
 
-      case 'MOPIDY_REMOVE_SERVER': {
+      case "MOPIDY_REMOVE_SERVER": {
         const servers = { ...store.getState().mopidy.servers };
         delete servers[action.id];
         store.dispatch(mopidyActions.updateServers(servers));
         break;
       }
 
-      case 'SET_WINDOW_FOCUS':
+      case "SET_WINDOW_FOCUS":
         /**
          * Disabled because it causes so many requests without any conscious user input.
          * Will monitor to see if it has any adverse impact.
@@ -555,429 +582,445 @@ const MopidyMiddleware = (function () {
         next(action);
         break;
 
-      case 'MOPIDY_REQUEST':
-        request(store, action.method, action.params)
-          .then(
-            (response) => {
-              if (action.response_callback) {
-                action.response_callback(response);
-              }
-            },
-            (error) => {
-              if (action.error_callback) {
-                action.error_callback(error);
-              } else {
-                store.dispatch(coreActions.handleException(
-                  'Mopidy request failed',
+      case "MOPIDY_REQUEST":
+        request(store, action.method, action.params).then(
+          (response) => {
+            if (action.response_callback) {
+              action.response_callback(response);
+            }
+          },
+          (error) => {
+            if (action.error_callback) {
+              action.error_callback(error);
+            } else {
+              store.dispatch(
+                coreActions.handleException(
+                  "Mopidy request failed",
                   error,
                   action.method,
-                  action,
-                ));
-              }
-            },
-          );
+                  action
+                )
+              );
+            }
+          }
+        );
         break;
 
-        /**
+      /**
        * General playback
        * */
 
-      case 'MOPIDY_PLAY_STATE':
+      case "MOPIDY_PLAY_STATE":
         store.dispatch(uiActions.setWindowTitle(null, action.play_state));
 
-        if (action.play_state == 'playing') {
-          setFavicon('favicon.png');
+        if (action.play_state == "playing") {
+          setFavicon("favicon.png");
         } else {
-          setFavicon('favicon_paused.png');
+          setFavicon("favicon_paused.png");
         }
         next(action);
         break;
 
-      case 'MOPIDY_GET_PLAY_STATE':
-        request(store, 'playback.getState')
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_PLAY_STATE',
-                play_state: response,
-              });
-            },
-          );
+      case "MOPIDY_GET_PLAY_STATE":
+        request(store, "playback.getState").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_PLAY_STATE",
+            play_state: response,
+          });
+        });
         break;
 
-      case 'MOPIDY_PLAY':
-        request(store, 'playback.play')
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_PLAY_STATE',
-                play_state: 'playing',
-              });
-            },
-          );
+      case "MOPIDY_PLAY":
+        request(store, "playback.play").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_PLAY_STATE",
+            play_state: "playing",
+          });
+        });
 
-        store.dispatch(pusherActions.deliverBroadcast(
-          'notification',
-          {
+        store.dispatch(
+          pusherActions.deliverBroadcast("notification", {
             notification: {
-              content: `${store.getState().pusher.username + (store.getState().mopidy.play_state == 'paused' ? ' resumed' : ' started')} playback`,
-              icon: (store.getState().core.current_track ? getTrackIcon(store.getState().core.current_track, store.getState().core) : false),
+              content: `${
+                store.getState().pusher.username +
+                (store.getState().mopidy.play_state == "paused"
+                  ? " resumed"
+                  : " started")
+              } playback`,
+              icon: store.getState().core.current_track
+                ? getTrackIcon(
+                    store.getState().core.current_track,
+                    store.getState().core
+                  )
+                : false,
             },
-          },
-        ));
+          })
+        );
         break;
 
-      case 'MOPIDY_PAUSE':
-        request(store, 'playback.pause')
-          .then((response) => {
-            store.dispatch({
-              type: 'MOPIDY_PLAY_STATE',
-              play_state: 'paused',
-            });
-            store.dispatch(pusherActions.deliverBroadcast(
-              'notification',
-              {
-                notification: {
-                  content: `${store.getState().pusher.username} paused playback`,
-                  icon: (store.getState().core.current_track ? getTrackIcon(store.getState().core.current_track, store.getState().core) : false),
-                },
-              },
-            ));
+      case "MOPIDY_PAUSE":
+        request(store, "playback.pause").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_PLAY_STATE",
+            play_state: "paused",
           });
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${store.getState().pusher.username} paused playback`,
+                icon: store.getState().core.current_track
+                  ? getTrackIcon(
+                      store.getState().core.current_track,
+                      store.getState().core
+                    )
+                  : false,
+              },
+            })
+          );
+        });
 
         break;
 
-      case 'MOPIDY_PREVIOUS':
-
+      case "MOPIDY_PREVIOUS":
         // Let the UI know we're in transition
-        store.dispatch(uiActions.setCurrentTrackTransition('previous'));
+        store.dispatch(uiActions.setCurrentTrackTransition("previous"));
 
-        request(store, 'playback.previous');
+        request(store, "playback.previous");
         break;
 
-      case 'MOPIDY_NEXT':
-
+      case "MOPIDY_NEXT":
         // Let the UI know we're in transition
-        store.dispatch(uiActions.setCurrentTrackTransition('next'));
+        store.dispatch(uiActions.setCurrentTrackTransition("next"));
 
-        request(store, 'playback.next')
-          .then((response) => {
-            store.dispatch(pusherActions.deliverBroadcast(
-              'notification',
-              {
-                notification: {
-                  content: `${store.getState().pusher.username} skipped "${store.getState().core.current_track.name}"`,
-                  icon: (store.getState().core.current_track ? getTrackIcon(store.getState().core.current_track, store.getState().core) : false),
-                },
+        request(store, "playback.next").then((response) => {
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${store.getState().pusher.username} skipped "${
+                  store.getState().core.current_track.name
+                }"`,
+                icon: store.getState().core.current_track
+                  ? getTrackIcon(
+                      store.getState().core.current_track,
+                      store.getState().core
+                    )
+                  : false,
               },
-            ));
-          });
+            })
+          );
+        });
 
         break;
 
-      case 'MOPIDY_STOP':
-        request(store, 'playback.stop')
-          .then((response) => {
-            store.dispatch(mopidyActions.clearCurrentTrack());
+      case "MOPIDY_STOP":
+        request(store, "playback.stop").then((response) => {
+          store.dispatch(mopidyActions.clearCurrentTrack());
 
-            store.dispatch(pusherActions.deliverBroadcast(
-              'notification',
-              {
-                notification: {
-                  content: `${store.getState().pusher.username} stopped playback`,
-                  icon: (store.getState().core.current_track ? getTrackIcon(store.getState().core.current_track, store.getState().core) : false),
-                },
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${store.getState().pusher.username} stopped playback`,
+                icon: store.getState().core.current_track
+                  ? getTrackIcon(
+                      store.getState().core.current_track,
+                      store.getState().core
+                    )
+                  : false,
               },
-            ));
-          });
+            })
+          );
+        });
         break;
 
-      case 'MOPIDY_CHANGE_TRACK':
-        request(store, 'playback.play', { tlid: action.tlid })
-          .then((response) => {
-            store.dispatch(pusherActions.deliverBroadcast(
-              'notification',
-              {
+      case "MOPIDY_CHANGE_TRACK":
+        request(store, "playback.play", { tlid: action.tlid }).then(
+          (response) => {
+            store.dispatch(
+              pusherActions.deliverBroadcast("notification", {
                 notification: {
                   content: `${store.getState().pusher.username} changed track`,
                 },
+              })
+            );
+          }
+        );
+        break;
+
+      case "MOPIDY_REMOVE_TRACKS":
+        request(store, "tracklist.remove", {
+          criteria: { tlid: action.tlids },
+        }).then((response) => {
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${store.getState().pusher.username} removed ${
+                  action.tlids.length
+                } tracks`,
               },
-            ));
-          });
+            })
+          );
+        });
         break;
 
-      case 'MOPIDY_REMOVE_TRACKS':
-        request(store, 'tracklist.remove', { criteria: { tlid: action.tlids } })
-          .then((response) => {
-            store.dispatch(pusherActions.deliverBroadcast(
-              'notification',
-              {
-                notification: {
-                  content: `${store.getState().pusher.username} removed ${action.tlids.length} tracks`,
-                },
+      case "MOPIDY_GET_REPEAT":
+        request(store, "tracklist.getRepeat").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_REPEAT",
+            repeat: response,
+          });
+        });
+        break;
+
+      case "MOPIDY_SET_REPEAT":
+        request(store, "tracklist.setRepeat", [action.repeat]);
+        break;
+
+      case "MOPIDY_GET_RANDOM":
+        request(store, "tracklist.getRandom").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_RANDOM",
+            random: response,
+          });
+        });
+        break;
+
+      case "MOPIDY_SET_RANDOM":
+        request(store, "tracklist.setRandom", [action.random]);
+        break;
+
+      case "MOPIDY_GET_CONSUME":
+        request(store, "tracklist.getConsume").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_CONSUME",
+            consume: response,
+          });
+        });
+        break;
+
+      case "MOPIDY_SET_CONSUME":
+        request(store, "tracklist.setConsume", [action.consume]);
+        break;
+
+      case "MOPIDY_GET_MUTE":
+        request(store, "mixer.getMute").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_MUTE",
+            mute: response,
+          });
+        });
+        break;
+
+      case "MOPIDY_SET_MUTE":
+        request(store, "mixer.setMute", [action.mute]).then((response) => {
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${
+                  store.getState().pusher.username +
+                  (action.mute ? " muted" : " unmuted")
+                } playback`,
               },
-            ));
-          });
+            })
+          );
+        });
         break;
 
-      case 'MOPIDY_GET_REPEAT':
-        request(store, 'tracklist.getRepeat')
-          .then((response) => {
+      case "MOPIDY_GET_VOLUME":
+        request(store, "mixer.getVolume").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_VOLUME",
+            volume: response,
+          });
+        });
+        break;
+
+      case "MOPIDY_SET_VOLUME":
+        request(store, "mixer.setVolume", { volume: action.volume }).then(
+          (response) => {
             store.dispatch({
-              type: 'MOPIDY_REPEAT',
-              repeat: response,
+              type: "MOPIDY_VOLUME",
+              volume: action.volume,
             });
+          }
+        );
+        break;
+
+      case "MOPIDY_SET_TIME_POSITION":
+        request(store, "playback.seek", {
+          time_position: action.time_position,
+        }).then((response) => {
+          store.dispatch({
+            type: "MOPIDY_TIME_POSITION",
+            time_position: action.time_position,
           });
+        });
         break;
 
-      case 'MOPIDY_SET_REPEAT':
-        request(store, 'tracklist.setRepeat', [action.repeat]);
-        break;
-
-      case 'MOPIDY_GET_RANDOM':
-        request(store, 'tracklist.getRandom')
-          .then((response) => {
-            store.dispatch({
-              type: 'MOPIDY_RANDOM',
-              random: response,
-            });
+      case "MOPIDY_GET_TIME_POSITION":
+        request(store, "playback.getTimePosition").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_TIME_POSITION",
+            time_position: response,
           });
+        });
         break;
 
-      case 'MOPIDY_SET_RANDOM':
-        request(store, 'tracklist.setRandom', [action.random]);
-        break;
-
-      case 'MOPIDY_GET_CONSUME':
-        request(store, 'tracklist.getConsume')
-          .then((response) => {
-            store.dispatch({
-              type: 'MOPIDY_CONSUME',
-              consume: response,
-            });
-          });
-        break;
-
-      case 'MOPIDY_SET_CONSUME':
-        request(store, 'tracklist.setConsume', [action.consume]);
-        break;
-
-      case 'MOPIDY_GET_MUTE':
-        request(store, 'mixer.getMute')
-          .then((response) => {
-            store.dispatch({
-              type: 'MOPIDY_MUTE',
-              mute: response,
-            });
-          });
-        break;
-
-      case 'MOPIDY_SET_MUTE':
-        request(store, 'mixer.setMute', [action.mute])
-          .then((response) => {
-            store.dispatch(pusherActions.deliverBroadcast(
-              'notification',
-              {
-                notification: {
-                  content: `${store.getState().pusher.username + (action.mute ? ' muted' : ' unmuted')} playback`,
-                },
-              },
-            ));
-          });
-        break;
-
-      case 'MOPIDY_GET_VOLUME':
-        request(store, 'mixer.getVolume')
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_VOLUME',
-                volume: response,
-              });
-            },
+      case "MOPIDY_GET_URI_SCHEMES":
+        request(store, "getUriSchemes").then((response) => {
+          // Remove unsupported schemes
+          const remove = [
+            "http",
+            "https",
+            "mms",
+            "rtmp",
+            "rtmps",
+            "rtsp",
+            "sc",
+            "yt",
+          ];
+          let uri_schemes = response.filter(
+            (uri) => remove.indexOf(uri) === -1
           );
-        break;
 
-      case 'MOPIDY_SET_VOLUME':
-        request(store, 'mixer.setVolume', { volume: action.volume })
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_VOLUME',
-                volume: action.volume,
-              });
-            },
+          // Append with ':' to make them a mopidy URI
+          uri_schemes = uri_schemes.map((uri) => `${uri}:`);
+
+          // Enable Iris providers when the backend is available
+          store.dispatch(
+            spotifyActions.set({ enabled: uri_schemes.includes("spotify:") })
           );
-        break;
-
-      case 'MOPIDY_SET_TIME_POSITION':
-        request(store, 'playback.seek', { time_position: action.time_position })
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_TIME_POSITION',
-                time_position: action.time_position,
-              });
-            },
+          store.dispatch(
+            googleActions.set({ enabled: uri_schemes.includes("gmusic:") })
           );
+
+          // If we haven't customised our search schemes, add all to search
+          if (store.getState().ui.uri_schemes_search_enabled === undefined) {
+            store.dispatch(
+              uiActions.set({ uri_schemes_search_enabled: uri_schemes })
+            );
+          }
+
+          store.dispatch({ type: "MOPIDY_URI_SCHEMES", uri_schemes });
+        });
         break;
 
-      case 'MOPIDY_GET_TIME_POSITION':
-        request(store, 'playback.getTimePosition')
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_TIME_POSITION',
-                time_position: response,
-              });
-            },
-          );
-        break;
-
-      case 'MOPIDY_GET_URI_SCHEMES':
-        request(store, 'getUriSchemes')
-          .then(
-            (response) => {
-              // Remove unsupported schemes
-              const remove = ['http', 'https', 'mms', 'rtmp', 'rtmps', 'rtsp', 'sc', 'yt'];
-              let uri_schemes = response.filter((uri) => remove.indexOf(uri) === -1);
-
-              // Append with ':' to make them a mopidy URI
-              uri_schemes = uri_schemes.map((uri) => `${uri}:`);
-
-              // Enable Iris providers when the backend is available
-              store.dispatch(spotifyActions.set({ enabled: uri_schemes.includes('spotify:') }));
-              store.dispatch(googleActions.set({ enabled: uri_schemes.includes('gmusic:') }));
-
-              // If we haven't customised our search schemes, add all to search
-              if (store.getState().ui.uri_schemes_search_enabled === undefined) {
-                store.dispatch(uiActions.set({ uri_schemes_search_enabled: uri_schemes }));
-              }
-
-              store.dispatch({ type: 'MOPIDY_URI_SCHEMES', uri_schemes });
-            },
-          );
-        break;
-
-      case 'MOPIDY_PLAY_PLAYLIST': {
+      case "MOPIDY_PLAY_PLAYLIST": {
         const playlist = store.getState().core.items[action.uri];
-        const { sortField, sortReverse } = getSortSelector(store.getState(), 'playlist_tracks');
+        const { sortField, sortReverse } = getSortSelector(
+          store.getState(),
+          "playlist_tracks"
+        );
         if (playlist && playlist.tracks) {
           store.dispatch(
             mopidyActions.playURIs({
               uris: arrayOf(
-                'uri',
+                "uri",
                 sortItems(
                   playlist.tracks.filter((t) => t?.is_playable !== false),
                   sortField,
-                  sortReverse,
-                ),
+                  sortReverse
+                )
               ),
               from: {
                 uri: playlist?.uri,
                 name: playlist?.name,
-                type: 'playlist',
+                type: "playlist",
               },
               ...action,
-            }),
+            })
           );
           break;
         }
         store.dispatch(
-          coreActions.loadPlaylist(
-            action.uri,
-            { full: true, callbackAction: { name: 'play', shuffle: action.shuffle } },
-          ),
+          coreActions.loadPlaylist(action.uri, {
+            full: true,
+            callbackAction: { name: "play", shuffle: action.shuffle },
+          })
         );
         break;
       }
 
-      case 'MOPIDY_PLAY_ALBUM': {
+      case "MOPIDY_PLAY_ALBUM": {
         const album = store.getState().core.items[action.uri];
-        const { sortField, sortReverse } = getSortSelector(store.getState(), 'playlist_tracks');
+        const { sortField, sortReverse } = getSortSelector(
+          store.getState(),
+          "playlist_tracks"
+        );
         if (album && album.tracks) {
           store.dispatch(
             mopidyActions.playURIs({
               uris: arrayOf(
-                'uri',
+                "uri",
                 sortItems(
                   album.tracks.filter((t) => t?.is_playable !== false),
                   sortField,
-                  sortReverse,
-                ),
+                  sortReverse
+                )
               ),
               from: {
                 uri: album?.uri,
                 name: album?.name,
-                type: 'album',
+                type: "album",
               },
               ...action,
-            }),
+            })
           );
           break;
         }
         store.dispatch(
-          coreActions.loadAlbum(
-            action.uri,
-            { full: true, callbackAction: { name: 'play', shuffle: action.shuffle } },
-          ),
+          coreActions.loadAlbum(action.uri, {
+            full: true,
+            callbackAction: { name: "play", shuffle: action.shuffle },
+          })
         );
         break;
       }
 
-      case 'MOPIDY_ENQUEUE_PLAYLIST': {
+      case "MOPIDY_ENQUEUE_PLAYLIST": {
         const playlist = store.getState().core.items[action.uri];
         if (playlist && playlist.tracks) {
           store.dispatch(
             mopidyActions.enqueueURIs({
-              uris: arrayOf('uri', playlist.tracks),
+              uris: arrayOf("uri", playlist.tracks),
               ...action,
-            }),
+            })
           );
           break;
         }
         store.dispatch(
-          coreActions.loadPlaylist(
-            action.uri,
-            false,
-            {
-              name: 'enqueue',
-              ...action,
-            },
-          ),
+          coreActions.loadPlaylist(action.uri, false, {
+            name: "enqueue",
+            ...action,
+          })
         );
         break;
       }
 
-      case 'MOPIDY_ENQUEUE_ALBUM': {
+      case "MOPIDY_ENQUEUE_ALBUM": {
         const album = store.getState().core.items[action.uri];
         if (album && album.tracks) {
           store.dispatch(
             mopidyActions.enqueueURIs({
-              uris: arrayOf('uri', album.tracks),
+              uris: arrayOf("uri", album.tracks),
               ...action,
-            }),
+            })
           );
           break;
         }
         store.dispatch(
-          coreActions.loadAlbum(
-            action.uri,
-            false,
-            {
-              name: 'enqueue',
-              ...action,
-            },
-          ),
+          coreActions.loadAlbum(action.uri, false, {
+            name: "enqueue",
+            ...action,
+          })
         );
         break;
       }
 
-      case 'MOPIDY_ENQUEUE_URIS': {
+      case "MOPIDY_ENQUEUE_URIS": {
         if (!action.uris || action.uris.length <= 0) {
           this.props.uiActions.createNotification({
-            content: 'No URIs to enqueue',
-            level: 'warning',
+            content: "No URIs to enqueue",
+            level: "warning",
           });
           break;
         }
@@ -987,10 +1030,7 @@ const MopidyMiddleware = (function () {
 
         // Uris are to go immediately after the currently-playing track (which could be paused)
         if (action.play_next) {
-          const {
-            current_track,
-            queue,
-          } = store.getState().core;
+          const { current_track, queue } = store.getState().core;
           if (current_track) {
             // TODO: Refactor this to findIndex
             for (let i = 0; i < queue.length; i += 1) {
@@ -1002,31 +1042,30 @@ const MopidyMiddleware = (function () {
           }
         }
 
-        store.dispatch(uiActions.startProcess(
-          action.type,
-          {
-            content: i18n('services.mopidy.adding_uris', { count: remaining }),
+        store.dispatch(
+          uiActions.startProcess(action.type, {
+            content: i18n("services.mopidy.adding_uris", { count: remaining }),
             remaining,
             total: remaining,
-          },
-        ));
+          })
+        );
 
-        store.dispatch(pusherActions.deliverBroadcast(
-          'notification',
-          {
+        store.dispatch(
+          pusherActions.deliverBroadcast("notification", {
             notification: {
-              content: i18n(
-                'services.mopidy.adding_uris_broadcast',
-                { username: store.getState().pusher.username, count: remaining },
-              ),
-              icon: (
-                store.getState().core.current_track
-                  ? getTrackIcon(store.getState().core.current_track, store.getState().core)
-                  : false
-              ),
+              content: i18n("services.mopidy.adding_uris_broadcast", {
+                username: store.getState().pusher.username,
+                count: remaining,
+              }),
+              icon: store.getState().core.current_track
+                ? getTrackIcon(
+                    store.getState().core.current_track,
+                    store.getState().core
+                  )
+                : false,
             },
-          },
-        ));
+          })
+        );
 
         // Prepare our URIS into batches. This allows performance gain of several URIs at once
         // (which is a blocking request), but not so many that it locks the Mopidy server.
@@ -1038,64 +1077,66 @@ const MopidyMiddleware = (function () {
         // This is our process iterator
         const run = () => {
           const processor = store.getState().ui.processes[action.type];
-          if (processor && processor.status === 'cancelling') {
+          if (processor && processor.status === "cancelling") {
             store.dispatch(uiActions.processCancelled(action.type));
             return;
           }
 
           const uris = batches.shift();
 
-          request(store, 'tracklist.add', { uris, at_position })
-            .then(
-              (response) => {
-                const tlids = response.map((track) => track.tlid);
-                store.dispatch(pusherActions.addQueueMetadata(tlids, action.from));
+          request(store, "tracklist.add", { uris, at_position }).then(
+            (response) => {
+              const tlids = response.map((track) => track.tlid);
+              store.dispatch(
+                pusherActions.addQueueMetadata(tlids, action.from)
+              );
 
-                // Re-run the batch checker in 100ms. This allows a small window for other server
-                // requests before our next batch. A little crude but it means the server isn't
-                // locked until we're completely done.
-                setTimeout(
-                  () => {
-                    if (!batches.length) {
-                      store.dispatch(uiActions.processFinished(action.type));
-                    } else {
-                      remaining -= uris.length;
-                      if (at_position !== null) at_position += uris.length;
-                      store.dispatch(
-                        uiActions.updateProcess(
-                          action.type,
-                          {
-                            remaining,
-                            content: i18n('services.mopidy.adding_uris', { count: remaining }),
-                          },
-                        ),
-                      );
-                      run();
-                    }
-                  },
-                  100,
-                );
-              },
-              (error) => {
-                store.dispatch(uiActions.processFinished(action.type));
-                store.dispatch(coreActions.handleException(
-                  `Mopidy: ${error.message || 'Adding tracks failed'}`,
-                  error,
-                ));
-              },
-            );
+              // Re-run the batch checker in 100ms. This allows a small window for other server
+              // requests before our next batch. A little crude but it means the server isn't
+              // locked until we're completely done.
+              setTimeout(() => {
+                if (!batches.length) {
+                  store.dispatch(uiActions.processFinished(action.type));
+                } else {
+                  remaining -= uris.length;
+                  if (at_position !== null) at_position += uris.length;
+                  store.dispatch(
+                    uiActions.updateProcess(action.type, {
+                      remaining,
+                      content: i18n("services.mopidy.adding_uris", {
+                        count: remaining,
+                      }),
+                    })
+                  );
+                  run();
+                }
+              }, 100);
+            },
+            (error) => {
+              store.dispatch(uiActions.processFinished(action.type));
+              store.dispatch(
+                coreActions.handleException(
+                  `Mopidy: ${error.message || "Adding tracks failed"}`,
+                  error
+                )
+              );
+            }
+          );
         };
 
         run(); // Kick off the loop
         break;
       }
 
-      case 'MOPIDY_PLAY_URIS':
+      case "MOPIDY_PLAY_URIS":
         const { from } = action;
         let urisToPlay = Object.assign([], action.uris);
 
         if (!urisToPlay || !urisToPlay.length) {
-          this.props.uiActions.createNotification({ content: 'No URIs to play', level: 'warning' });
+          this.props.uiActions.createNotification({
+            content: "No URIs to play",
+            level: "warning",
+          });
           break;
         }
 
@@ -1104,7 +1145,10 @@ const MopidyMiddleware = (function () {
         }
 
         // Stop the radio
-        if (store.getState().core.radio && store.getState().core.radio.enabled) {
+        if (
+          store.getState().core.radio &&
+          store.getState().core.radio.enabled
+        ) {
           store.dispatch(pusherActions.stopRadio());
         }
 
@@ -1122,198 +1166,204 @@ const MopidyMiddleware = (function () {
         var first_uri = urisToPlay[first_uri_index];
 
         // add our first track
-        request(store, 'tracklist.add', { uris: [first_uri], at_position: 0 })
-          .then(
-            (response) => {
-              // play it (only if we got a successful lookup)
-              if (response.length > 0) {
-                store.dispatch(mopidyActions.changeTrack(response[0].tlid));
+        request(store, "tracklist.add", {
+          uris: [first_uri],
+          at_position: 0,
+        }).then(
+          (response) => {
+            // play it (only if we got a successful lookup)
+            if (response.length > 0) {
+              store.dispatch(mopidyActions.changeTrack(response[0].tlid));
 
-                const tlids = [];
-                for (let i = 0; i < response.length; i++) {
-                  tlids.push(response[i].tlid);
-                }
-                store.dispatch(pusherActions.addQueueMetadata(tlids, from));
-              } else {
-                store.dispatch(coreActions.handleException(
-                  'Mopidy: Failed to add some tracks',
-                  response,
-                ));
+              const tlids = [];
+              for (let i = 0; i < response.length; i++) {
+                tlids.push(response[i].tlid);
               }
+              store.dispatch(pusherActions.addQueueMetadata(tlids, from));
+            } else {
+              store.dispatch(
+                coreActions.handleException(
+                  "Mopidy: Failed to add some tracks",
+                  response
+                )
+              );
+            }
 
-              // Remove our first_uri as we've already added it
-              urisToPlay.splice(first_uri_index, 1);
+            // Remove our first_uri as we've already added it
+            urisToPlay.splice(first_uri_index, 1);
 
-              // And add the rest of our uris (if any)
-              if (urisToPlay.length > 0) {
-                // Wait a moment so the server can trigger track_changed etc
-                // this means our UI feels snappier as the first track shows up quickly
-                setTimeout(
-                  () => {
-                    store.dispatch(mopidyActions.enqueueURIs({
-                      uris: urisToPlay,
-                      at_position: 1,
-                      from,
-                    }));
-                  },
-                  100,
+            // And add the rest of our uris (if any)
+            if (urisToPlay.length > 0) {
+              // Wait a moment so the server can trigger track_changed etc
+              // this means our UI feels snappier as the first track shows up quickly
+              setTimeout(() => {
+                store.dispatch(
+                  mopidyActions.enqueueURIs({
+                    uris: urisToPlay,
+                    at_position: 1,
+                    from,
+                  })
                 );
-              }
-            },
-            (error) => {
-              store.dispatch(coreActions.handleException(
-                `Mopidy: ${error.message ? error.message : 'Adding tracks failed'}`,
-                error,
-              ));
-            },
-          );
+              }, 100);
+            }
+          },
+          (error) => {
+            store.dispatch(
+              coreActions.handleException(
+                `Mopidy: ${
+                  error.message ? error.message : "Adding tracks failed"
+                }`,
+                error
+              )
+            );
+          }
+        );
         break;
 
-      case 'MOPIDY_REORDER_TRACKLIST':
-        request(store, 'tracklist.move', { start: action.range_start, end: action.range_start + action.range_length, to_position: action.insert_before })
-          .then(
-            () => {
-              // TODO: when complete, send event to confirm success/failure
-            },
-            (error) => {
-              store.dispatch(coreActions.handleException(
-                `Mopidy: ${error.message ? error.message : 'Reorder failed'}`,
-                error,
-              ));
-            },
-          );
+      case "MOPIDY_REORDER_TRACKLIST":
+        request(store, "tracklist.move", {
+          start: action.range_start,
+          end: action.range_start + action.range_length,
+          to_position: action.insert_before,
+        }).then(
+          () => {
+            // TODO: when complete, send event to confirm success/failure
+          },
+          (error) => {
+            store.dispatch(
+              coreActions.handleException(
+                `Mopidy: ${error.message ? error.message : "Reorder failed"}`,
+                error
+              )
+            );
+          }
+        );
         break;
 
-      case 'MOPIDY_CLEAR_TRACKLIST':
-        request(store, 'tracklist.clear')
-          .then(
-            () => {
-              store.dispatch(coreActions.clearCurrentTrack());
+      case "MOPIDY_CLEAR_TRACKLIST":
+        request(store, "tracklist.clear").then(() => {
+          store.dispatch(coreActions.clearCurrentTrack());
 
-              store.dispatch(pusherActions.deliverBroadcast(
-                'notification',
-                {
-                  notification: {
-                    content: `${store.getState().pusher.username} cleared the playback queue`,
-                  },
-                },
-              ));
-            },
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${
+                  store.getState().pusher.username
+                } cleared the playback queue`,
+              },
+            })
           );
+        });
         break;
 
-      case 'MOPIDY_SHUFFLE_TRACKLIST':
-        request(store, 'tracklist.shuffle', { start: 1 })
-          .then(
-            () => {
-              store.dispatch(pusherActions.deliverBroadcast(
-                'notification',
-                {
-                  notification: {
-                    content: `${store.getState().pusher.username} shuffled the playback queue`,
-                  },
-                },
-              ));
-            },
+      case "MOPIDY_SHUFFLE_TRACKLIST":
+        request(store, "tracklist.shuffle", { start: 1 }).then(() => {
+          store.dispatch(
+            pusherActions.deliverBroadcast("notification", {
+              notification: {
+                content: `${
+                  store.getState().pusher.username
+                } shuffled the playback queue`,
+              },
+            })
           );
+        });
         break;
 
-        /**
-           * =============================================================== SEARCHING ============
-           * ======================================================================================
-           * */
+      /**
+       * =============================================================== SEARCHING ============
+       * ======================================================================================
+       * */
 
-      case 'MOPIDY_GET_SEARCH_RESULTS': {
-        const {
-          uri_schemes = [],
-          query = {},
-        } = action;
-        const types = query.type === 'all'
-          ? ['artists', 'albums', 'tracks', 'playlists']
-          : [query.type];
+      case "MOPIDY_GET_SEARCH_RESULTS": {
+        const { uri_schemes = [], query = {} } = action;
+        const types =
+          query.type === "all"
+            ? ["artists", "albums", "tracks", "playlists"]
+            : [query.type];
 
         const queue = [];
-        uri_schemes.forEach(
-          (uri_scheme) => types.forEach(
-            (type) => {
-              const item = {
-                type: query.type,
-                term: query.term,
-                requestType: type,
-                uri_scheme,
-                data: {
-                  uris: [uri_scheme],
-                },
-              };
-              switch (type) {
-                case 'tracks':
-                  item.data.query = { any: [query.term] };
-                  break;
-                case 'artists':
-                  item.data.query = { artist: [query.term] };
-                  break;
-                case 'albums':
-                  item.data.query = { album: [query.term] };
-                  break;
-                case 'playlists':
-                  // Searching for playlists is not supported, so we get a simple
-                  // list of names and perform a client-side regex match
-                  item.method = 'playlists.asList';
-                  item.data = {};
-                  break;
-                default:
-                  break;
-              }
-              queue.push(item);
-            },
-          ),
+        uri_schemes.forEach((uri_scheme) =>
+          types.forEach((type) => {
+            const item = {
+              type: query.type,
+              term: query.term,
+              requestType: type,
+              uri_scheme,
+              data: {
+                uris: [uri_scheme],
+              },
+            };
+            switch (type) {
+              case "tracks":
+                item.data.query = { any: [query.term] };
+                break;
+              case "artists":
+                item.data.query = { artist: [query.term] };
+                break;
+              case "albums":
+                item.data.query = { album: [query.term] };
+                break;
+              case "playlists":
+                // Searching for playlists is not supported, so we get a simple
+                // list of names and perform a client-side regex match
+                item.method = "playlists.asList";
+                item.data = {};
+                break;
+              default:
+                break;
+            }
+            queue.push(item);
+          })
         );
 
         if (queue.length) {
-          store.dispatch(uiActions.startProcess(
-            action.type,
-            {
-              content: i18n('services.mopidy.searching'),
+          store.dispatch(
+            uiActions.startProcess(action.type, {
+              content: i18n("services.mopidy.searching"),
               total: queue.length,
               remaining: queue.length,
-            },
-          ));
+            })
+          );
 
           processSearchQueue(store, queue);
         }
         break;
       }
 
-      case 'MOPIDY_GET_URIS': {
+      case "MOPIDY_GET_URIS": {
         const { uris } = action;
-        request(store, 'library.lookup', { uris })
-          .then((response) => {
-            if (!response) return;
+        request(store, "library.lookup", { uris }).then((response) => {
+          if (!response) return;
 
-            indexToArray(response).forEach((item) => {
-              store.dispatch(coreActions[`load${item.___model__}`](item.uri));
-            });
+          indexToArray(response).forEach((item) => {
+            store.dispatch(coreActions[`load${item.___model__}`](item.uri));
           });
+        });
         break;
       }
 
-      case 'MOPIDY_GET_PLAYLIST': {
+      case "MOPIDY_GET_PLAYLIST": {
         const processResponse = (response, fetchTracks = true) => {
           const playlist = formatPlaylist({
             can_edit: true,
-            provider: 'mopidy',
+            provider: "mopidy",
             ...response,
             uri: action.uri, // Patch in the requested URI
-            type: 'playlist',
+            type: "playlist",
           });
           if (response.tracks && fetchTracks) {
-            store.dispatch(coreActions.itemLoaded({
-              ...playlist,
-              tracks: undefined,
-              loading: 'tracks',
-            }));
+            store.dispatch(
+              coreActions.itemLoaded({
+                ...playlist,
+                tracks: undefined,
+                loading: "tracks",
+              })
+            );
 
-            request(store, 'library.lookup', { uris: arrayOf('uri', response.tracks) })
+            request(store, "library.lookup", {
+              uris: arrayOf("uri", response.tracks),
+            })
               .then((tracksResponse) => {
                 const tracks = response.tracks.map((simpleTrack) => {
                   const fullTracks = tracksResponse[simpleTrack.uri];
@@ -1326,10 +1376,12 @@ const MopidyMiddleware = (function () {
                 store.dispatch(coreActions.itemLoaded(playlist));
               })
               .catch(() => {
-                store.dispatch(coreActions.itemLoaded({
-                  uri: playlist.uri,
-                  loading: undefined,
-                }));
+                store.dispatch(
+                  coreActions.itemLoaded({
+                    uri: playlist.uri,
+                    loading: undefined,
+                  })
+                );
               });
           } else {
             store.dispatch(coreActions.itemLoaded(playlist));
@@ -1340,40 +1392,55 @@ const MopidyMiddleware = (function () {
           }
         };
 
-        request(store, 'playlists.lookup', { uri: action.uri })
-          .then((playlistResponse) => {
+        request(store, "playlists.lookup", { uri: action.uri }).then(
+          (playlistResponse) => {
             if (playlistResponse) {
               // Got a playlist from our playlists core, this is typically because it's a local
               // playlist, or one that our backend user owns.
               processResponse(playlistResponse);
             } else {
-              console.info('Playlist not in playlists, fetching using library', action.uri);
+              console.info(
+                "Playlist not in playlists, fetching using library",
+                action.uri
+              );
               // No match, so let's try fetching from foreign provider. This needs to happen when we
               // don't have a HTTP API (eg Spotify) but the playlist is not ours (eg Tidal browse)
-              request(store, 'library.lookup', { uris: [action.uri] })
-                .then(({ [action.uri]: libraryResponse } = {}) => {
+              request(store, "library.lookup", { uris: [action.uri] }).then(
+                ({ [action.uri]: libraryResponse } = {}) => {
                   if (!libraryResponse) return;
-                  processResponse({
-                    tracks: libraryResponse,
-                    can_edit: false,
-                    ...action.options.name ? { name: action.options.name } : {},
-                  }, false);
-                });
+                  processResponse(
+                    {
+                      tracks: libraryResponse,
+                      can_edit: false,
+                      ...(action.options.name
+                        ? { name: action.options.name }
+                        : {}),
+                    },
+                    false
+                  );
+                }
+              );
             }
-          });
+          }
+        );
         break;
       }
 
-      case 'MOPIDY_ADD_PLAYLIST_TRACKS':
-        request(store, 'playlists.lookup', { uri: action.key })
-          .then((response) => {
+      case "MOPIDY_ADD_PLAYLIST_TRACKS":
+        request(store, "playlists.lookup", { uri: action.key }).then(
+          (response) => {
             if (!response) {
-              store.dispatch(coreActions.handleException(
-                i18n('errors.uri_not_found', { uri: action.key }),
-              ));
+              store.dispatch(
+                coreActions.handleException(
+                  i18n("errors.uri_not_found", { uri: action.key })
+                )
+              );
               return;
             }
-            const tracks = action.tracks_uris.map((uri) => ({ __model__: 'Track', uri }));
+            const tracks = action.tracks_uris.map((uri) => ({
+              __model__: "Track",
+              uri,
+            }));
             const playlist = { ...response };
             if (playlist.tracks) {
               playlist.tracks = [...playlist.tracks, ...tracks];
@@ -1381,18 +1448,18 @@ const MopidyMiddleware = (function () {
               playlist.tracks = tracks;
             }
 
-            request(store, 'playlists.save', { playlist })
-              .then(() => {
-                store.dispatch({
-                  type: 'PLAYLIST_TRACKS_ADDED',
-                  key: action.key,
-                  tracks_uris: action.tracks_uris,
-                });
+            request(store, "playlists.save", { playlist }).then(() => {
+              store.dispatch({
+                type: "PLAYLIST_TRACKS_ADDED",
+                key: action.key,
+                tracks_uris: action.tracks_uris,
               });
-          });
+            });
+          }
+        );
         break;
 
-      case 'MOPIDY_REMOVE_PLAYLIST_TRACKS':
+      case "MOPIDY_REMOVE_PLAYLIST_TRACKS":
         // reverse order our indexes (otherwise removing from top will affect the keys following)
         function descending(a, b) {
           return b - a;
@@ -1400,61 +1467,67 @@ const MopidyMiddleware = (function () {
         var indexes = Object.assign([], action.tracks_indexes);
         indexes.sort(descending);
 
-        request(store, 'playlists.lookup', { uri: action.key })
-          .then((response) => {
+        request(store, "playlists.lookup", { uri: action.key }).then(
+          (response) => {
             const playlist = { ...response };
             for (let i = 0; i < indexes.length; i++) {
               playlist.tracks.splice(indexes[i], 1);
             }
-            request(store, 'playlists.save', { playlist })
-              .then((response) => {
-                store.dispatch({
-                  type: 'PLAYLIST_TRACKS_REMOVED',
-                  key: action.key,
-                  tracks_indexes: action.tracks_indexes,
-                });
+            request(store, "playlists.save", { playlist }).then((response) => {
+              store.dispatch({
+                type: "PLAYLIST_TRACKS_REMOVED",
+                key: action.key,
+                tracks_indexes: action.tracks_indexes,
               });
-          });
+            });
+          }
+        );
         break;
 
-      case 'MOPIDY_SAVE_PLAYLIST':
+      case "MOPIDY_SAVE_PLAYLIST":
         // Even though we have the full playlist in our index, our "playlists.save" request
         // requires a Mopidy playlist object (with updates)
-        request(store, 'playlists.lookup', { uri: action.key })
-          .then((response) => {
+        request(store, "playlists.lookup", { uri: action.key }).then(
+          (response) => {
             const mopidy_playlist = { ...response, ...action.data };
 
-            request(store, 'playlists.save', { playlist: mopidy_playlist })
-              .then((response) => {
-                if (!response) return;
+            request(store, "playlists.save", {
+              playlist: mopidy_playlist,
+            }).then((response) => {
+              if (!response) return;
 
-                // Overwrite our playlist with the response to our save
-                // This is essential to get the updated URI from Mopidy
-                const playlist = {
-                  ...action.data,
-                  ...store.getState().core.items[action.key],
-                  ...response,
-                };
+              // Overwrite our playlist with the response to our save
+              // This is essential to get the updated URI from Mopidy
+              const playlist = {
+                ...action.data,
+                ...store.getState().core.items[action.key],
+                ...response,
+              };
 
-                // When we rename a playlist, the URI also changes to reflect the name change.
-                // We need to update our index, as well as redirect our current page URL.
-                if (action.key !== playlist.uri) {
-                  // Remove old playlist (by old key/uri) from index
-                  // By providing the new key, the old playlist gets replaced with a redirector object
-                  store.dispatch(coreActions.removeItem(action.key, playlist.uri));
-                  store.dispatch(coreActions.removePinned(action.key));
-                  store.dispatch(coreActions.addPinned(playlist));
-                }
+              // When we rename a playlist, the URI also changes to reflect the name change.
+              // We need to update our index, as well as redirect our current page URL.
+              if (action.key !== playlist.uri) {
+                // Remove old playlist (by old key/uri) from index
+                // By providing the new key, the old playlist gets replaced with a redirector object
+                store.dispatch(
+                  coreActions.removeItem(action.key, playlist.uri)
+                );
+                store.dispatch(coreActions.removePinned(action.key));
+                store.dispatch(coreActions.addPinned(playlist));
+              }
 
-                store.dispatch(coreActions.itemLoaded(playlist));
-                store.dispatch(uiActions.createNotification({ content: 'Playlist saved' }));
-              });
-          });
+              store.dispatch(coreActions.itemLoaded(playlist));
+              store.dispatch(
+                uiActions.createNotification({ content: "Playlist saved" })
+              );
+            });
+          }
+        );
         break;
 
-      case 'MOPIDY_REORDER_PLAYLIST_TRACKS':
-        request(store, 'playlists.lookup', { uri: action.key })
-          .then((response) => {
+      case "MOPIDY_REORDER_PLAYLIST_TRACKS":
+        request(store, "playlists.lookup", { uri: action.key }).then(
+          (response) => {
             let playlist = { ...response };
             const tracks = Object.assign([], playlist.tracks);
             const tracks_to_move = [];
@@ -1480,72 +1553,84 @@ const MopidyMiddleware = (function () {
             }
 
             playlist = { ...playlist, tracks };
-            request(store, 'playlists.save', { playlist })
-              .then(() => {
-                store.dispatch({
-                  type: 'PLAYLIST_TRACKS_REORDERED',
-                  key: action.key,
-                  range_start,
-                  range_length,
-                  insert_before: action.insert_before, // We've adjusted this, so use original
-                });
+            request(store, "playlists.save", { playlist }).then(() => {
+              store.dispatch({
+                type: "PLAYLIST_TRACKS_REORDERED",
+                key: action.key,
+                range_start,
+                range_length,
+                insert_before: action.insert_before, // We've adjusted this, so use original
               });
-          });
+            });
+          }
+        );
         break;
 
-      case 'MOPIDY_CREATE_PLAYLIST':
+      case "MOPIDY_CREATE_PLAYLIST":
         const data = {
           name: action.playlist.name,
           uri_scheme: action.playlist.scheme,
         };
-        request(store, 'playlists.create', data)
-          .then((response) => {
-            const playlist = formatPlaylist({
-              ...response,
-              ...action,
-              can_edit: true,
-              type: 'playlist',
-              provider: 'mopidy',
-            });
-            store.dispatch(uiActions.createNotification({
-              content: i18n('actions.created', { name: i18n('playlist.title') }),
-            }));
-            if (action.playlist.tracks_uris) {
-              store.dispatch(coreActions.addTracksToPlaylist(
+        request(store, "playlists.create", data).then((response) => {
+          const playlist = formatPlaylist({
+            ...response,
+            ...action,
+            can_edit: true,
+            type: "playlist",
+            provider: "mopidy",
+          });
+          store.dispatch(
+            uiActions.createNotification({
+              content: i18n("actions.created", {
+                name: i18n("playlist.title"),
+              }),
+            })
+          );
+          if (action.playlist.tracks_uris) {
+            store.dispatch(
+              coreActions.addTracksToPlaylist(
                 playlist.uri,
-                action.playlist.tracks_uris,
-              ));
-            }
-            store.dispatch(coreActions.addToLibrary(
-              getProvider('playlists', 'm3u:')?.uri,
-              playlist,
-            ));
-          });
+                action.playlist.tracks_uris
+              )
+            );
+          }
+          store.dispatch(
+            coreActions.addToLibrary(
+              getProvider("playlists", "m3u:")?.uri,
+              playlist
+            )
+          );
+        });
         break;
 
-      case 'MOPIDY_DELETE_PLAYLIST':
-        request(store, 'playlists.delete', { uri: action.uri })
-          .then(() => {
-            store.dispatch(uiActions.createNotification({
-              content: i18n('actions.deleted', { name: i18n('playlist.title') }),
-            }));
-            store.dispatch(coreActions.removeFromLibrary('m3u:playlists', action.uri));
-          });
+      case "MOPIDY_DELETE_PLAYLIST":
+        request(store, "playlists.delete", { uri: action.uri }).then(() => {
+          store.dispatch(
+            uiActions.createNotification({
+              content: i18n("actions.deleted", {
+                name: i18n("playlist.title"),
+              }),
+            })
+          );
+          store.dispatch(
+            coreActions.removeFromLibrary("m3u:playlists", action.uri)
+          );
+        });
         break;
 
-      case 'MOPIDY_GET_ALBUM':
-        request(store, 'library.lookup', { uris: [action.uri] })
-          .then((_response) => {
+      case "MOPIDY_GET_ALBUM":
+        request(store, "library.lookup", { uris: [action.uri] }).then(
+          (_response) => {
             const { uri } = action;
             if (!_response) return;
             let response = _response[uri];
             if (!response || !response.length) return;
 
-            response = sortItems(response, 'track_number');
+            response = sortItems(response, "track_number");
 
             const album = {
               ...response[0].album,
-              source: 'local',
+              source: "local",
               artists: formatArtists(response[0].artists),
               tracks: formatTracks(response),
             };
@@ -1555,12 +1640,13 @@ const MopidyMiddleware = (function () {
             if (!album.images) {
               store.dispatch(mopidyActions.getImages([album.uri]));
             }
-          });
+          }
+        );
         break;
 
-      case 'MOPIDY_GET_ARTIST': {
-        request(store, 'library.lookup', { uris: [action.uri] })
-          .then((_response) => {
+      case "MOPIDY_GET_ARTIST": {
+        request(store, "library.lookup", { uris: [action.uri] }).then(
+          (_response) => {
             if (!_response) return;
             const response = _response[action.uri];
             if (!response || !response.length) return;
@@ -1574,7 +1660,7 @@ const MopidyMiddleware = (function () {
                 };
                 if (album) {
                   const existingAlbum = albums.find(
-                    (albumToCheck) => album.uri === albumToCheck.uri,
+                    (albumToCheck) => album.uri === albumToCheck.uri
                   );
                   if (!existingAlbum) {
                     albums.push(album);
@@ -1590,7 +1676,9 @@ const MopidyMiddleware = (function () {
             // (Mopidy) artist object but gives us enough to fetch their name and artwork.
             let raw_artist = null;
             response.forEach((track) => {
-              const matchingArtist = track.artists.find((artist) => artist.uri === action.uri);
+              const matchingArtist = track.artists.find(
+                (artist) => artist.uri === action.uri
+              );
               if (matchingArtist) {
                 raw_artist = matchingArtist;
               }
@@ -1598,71 +1686,71 @@ const MopidyMiddleware = (function () {
 
             const artist = {
               uri: action.uri,
-              provider: 'mopidy',
-              albums_uris: arrayOf('uri', albums),
+              provider: "mopidy",
+              albums_uris: arrayOf("uri", albums),
               tracks: formatTracks(response),
               ...(raw_artist ? formatArtist(raw_artist) : {}),
             };
 
             store.dispatch(coreActions.itemLoaded(artist));
 
+            const state = store.getState();
             // We may not have a raw_artist if the tracks' artist is not found (ie the requested
             // artist may be the albumartist).
             if (raw_artist) {
-              store.dispatch(lastfmActions.getArtist(artist.uri, artist.name, artist.musicbrainz_id));
-
+              if (state.lastfm.enabled) {
+                store.dispatch(
+                  lastfmActions.getArtist(
+                    artist.uri,
+                    artist.name,
+                    artist.musicbrainz_id
+                  )
+                );
+              }
               // Load supprting information from LastFM and Discogs
-              if (store.getState().spotify.enabled) {
+              if (state.spotify.enabled) {
                 store.dispatch(spotifyActions.getArtistImages(artist));
               } else {
-                store.dispatch(discogsActions.getArtistImages(artist.uri, artist));
+                //store.dispatch(discogsActions.getArtistImages(artist.uri, artist));
               }
             }
-          });
+          }
+        );
         break;
       }
 
-      case 'MOPIDY_GET_QUEUE':
-        request(store, 'tracklist.getTlTracks')
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'QUEUE_LOADED',
-                tracks: response,
-              });
-            },
-          );
+      case "MOPIDY_GET_QUEUE":
+        request(store, "tracklist.getTlTracks").then((response) => {
+          store.dispatch({
+            type: "QUEUE_LOADED",
+            tracks: response,
+          });
+        });
         break;
 
-      case 'MOPIDY_GET_QUEUE_HISTORY':
-        request(store, 'history.getHistory')
-          .then(
-            (response) => {
-              store.dispatch({
-                type: 'MOPIDY_QUEUE_HISTORY',
-                tracks: response,
-              });
-            },
-          );
+      case "MOPIDY_GET_QUEUE_HISTORY":
+        request(store, "history.getHistory").then((response) => {
+          store.dispatch({
+            type: "MOPIDY_QUEUE_HISTORY",
+            tracks: response,
+          });
+        });
         break;
 
-      case 'MOPIDY_GET_CURRENT_TRACK':
-        request(store, 'playback.getCurrentTlTrack')
-          .then(
-            (response) => {
-              if (response && response.track) {
-                store.dispatch(mopidyActions.currentTrackLoaded(response));
-              }
-            },
-          );
+      case "MOPIDY_GET_CURRENT_TRACK":
+        request(store, "playback.getCurrentTlTrack").then((response) => {
+          if (response && response.track) {
+            store.dispatch(mopidyActions.currentTrackLoaded(response));
+          }
+        });
         break;
 
-      case 'MOPIDY_CURRENT_TRACK_LOADED': {
+      case "MOPIDY_CURRENT_TRACK_LOADED": {
         store.dispatch(uiActions.setCurrentTrackTransition(false));
         const track = formatTrack(action.tl_track);
         if (track.uri) {
           store.dispatch({
-            type: 'CURRENT_TRACK_LOADED',
+            type: "CURRENT_TRACK_LOADED",
             track,
             uri: track.uri,
           });
@@ -1671,143 +1759,154 @@ const MopidyMiddleware = (function () {
         break;
       }
 
-      case 'MOPIDY_GET_NEXT_TRACK':
-        request(store, 'tracklist.getNextTlid')
-          .then(
-            (response) => {
-              if (response && response >= 0) {
-                // Get the full track object from our tracklist
-                // We know it will be here, as the tlid refers to an item in this list
-                const track = applyFilter('tlid', response, store.getState().core.queue, true);
+      case "MOPIDY_GET_NEXT_TRACK":
+        request(store, "tracklist.getNextTlid").then(
+          (response) => {
+            if (response && response >= 0) {
+              // Get the full track object from our tracklist
+              // We know it will be here, as the tlid refers to an item in this list
+              const track = applyFilter(
+                "tlid",
+                response,
+                store.getState().core.queue,
+                true
+              );
 
-                if (track && track.uri) {
-                  store.dispatch({
-                    type: 'NEXT_TRACK_LOADED',
-                    uri: track.uri,
-                  });
+              if (track && track.uri) {
+                store.dispatch({
+                  type: "NEXT_TRACK_LOADED",
+                  uri: track.uri,
+                });
 
-                  store.dispatch(coreActions.loadTrack(track.uri));
-                }
+                store.dispatch(coreActions.loadTrack(track.uri));
               }
-            },
-            (error) => {
-              store.dispatch(coreActions.handleException(
-                `Mopidy: ${error.message ? error.message : 'Could not get next track'}`,
-                error,
-              ));
-            },
-          );
+            }
+          },
+          (error) => {
+            store.dispatch(
+              coreActions.handleException(
+                `Mopidy: ${
+                  error.message ? error.message : "Could not get next track"
+                }`,
+                error
+              )
+            );
+          }
+        );
         break;
 
-      case 'MOPIDY_GET_TRACKS': {
-        const { uris, options: { full, lyrics } } = action;
-        request(store, 'library.lookup', { uris })
-          .then(
-            (_response) => {
-              if (!_response) return;
-              const tracks = compact(indexToArray(_response).map(
-                (results) => (results.length ? formatTrack(results[0]) : null),
-              ));
+      case "MOPIDY_GET_TRACKS": {
+        const {
+          uris,
+          options: { full, lyrics },
+        } = action;
+        request(store, "library.lookup", { uris }).then(
+          (_response) => {
+            if (!_response) return;
+            const tracks = compact(
+              indexToArray(_response).map((results) =>
+                results.length ? formatTrack(results[0]) : null
+              )
+            );
 
-              store.dispatch(coreActions.itemsLoaded(tracks));
-              store.dispatch(mopidyActions.getImages(arrayOf('uri', tracks)));
+            store.dispatch(coreActions.itemsLoaded(tracks));
+            store.dispatch(mopidyActions.getImages(arrayOf("uri", tracks)));
 
-              tracks.forEach((track) => {
-                if (full) {
-                  if (store.getState().lastfm.authorization) {
-                    store.dispatch(lastfmActions.getTrack(track.uri));
-                  }
+            tracks.forEach((track) => {
+              if (full) {
+                if (store.getState().lastfm.authorization) {
+                  store.dispatch(lastfmActions.getTrack(track.uri));
                 }
-                if (lyrics && store.getState().genius.authorization) {
-                  store.dispatch(geniusActions.findTrackLyrics(track.uri));
-                }
-              });
-            },
-            (error) => {
-              store.dispatch(coreActions.handleException(
-                `Mopidy: ${error.message ? error.message : 'Could not get track'}`,
-                error,
-              ));
-            },
-          );
+              }
+              if (lyrics && store.getState().genius.authorization) {
+                store.dispatch(geniusActions.findTrackLyrics(track.uri));
+              }
+            });
+          },
+          (error) => {
+            store.dispatch(
+              coreActions.handleException(
+                `Mopidy: ${
+                  error.message ? error.message : "Could not get track"
+                }`,
+                error
+              )
+            );
+          }
+        );
         break;
       }
 
-      case 'MOPIDY_GET_STREAM_TITLE':
-        request(store, 'playback.getStreamTitle')
-          .then(
-            (stream_title) => {
-              if (!stream_title) return;
+      case "MOPIDY_GET_STREAM_TITLE":
+        request(store, "playback.getStreamTitle").then((stream_title) => {
+          if (!stream_title) return;
 
-              store.dispatch(coreActions.streamTitleLoaded(stream_title));
-            },
-          );
+          store.dispatch(coreActions.streamTitleLoaded(stream_title));
+        });
         break;
 
-      case 'VIEW__GET_RANDOM_TRACKS':
-        request(store, 'library.browse', { uri: 'local:directory?type=track' })
-          .then(
-            (_response) => {
-              if (!_response || !_response.length) return;
+      case "VIEW__GET_RANDOM_TRACKS":
+        request(store, "library.browse", {
+          uri: "local:directory?type=track",
+        }).then((_response) => {
+          if (!_response || !_response.length) return;
 
-              const uris = sampleSize(arrayOf('uri', _response), action.limit);
+          const uris = sampleSize(arrayOf("uri", _response), action.limit);
 
-              request(store, 'library.lookup', { uris })
-                .then(
-                  (_response) => {
-                    if (!_response) return;
+          request(store, "library.lookup", { uris }).then((_response) => {
+            if (!_response) return;
 
-                    const random_tracks = indexToArray(_response).map((results) => results[0]);
-                    const view = store.getState().core.view || {};
-                    store.dispatch(coreActions.viewDataLoaded({
-                      random_tracks: [
-                        ...(view.random_tracks ? view.random_tracks : []),
-                        ...random_tracks,
-                      ],
-                      uris: [
-                        ...(view.uris ? view.uris : []),
-                        ...uris,
-                      ],
-                    }));
-                  },
-                );
-            },
-          );
+            const random_tracks = indexToArray(_response).map(
+              (results) => results[0]
+            );
+            const view = store.getState().core.view || {};
+            store.dispatch(
+              coreActions.viewDataLoaded({
+                random_tracks: [
+                  ...(view.random_tracks ? view.random_tracks : []),
+                  ...random_tracks,
+                ],
+                uris: [...(view.uris ? view.uris : []), ...uris],
+              })
+            );
+          });
+        });
         break;
 
-      case 'MOPIDY_GET_IMAGES': {
+      case "MOPIDY_GET_IMAGES": {
         const { uris } = action;
         if (!uris) break;
 
-        request(store, 'library.getImages', { uris })
-          .then((response) => {
-            const itemsWithImages = [];
-            Object.keys(response).forEach((uri) => {
-              const images = response[uri];
+        request(store, "library.getImages", { uris }).then((response) => {
+          const itemsWithImages = [];
+          Object.keys(response).forEach((uri) => {
+            const images = response[uri];
 
-              if (images) {
-                itemsWithImages.push({
-                  uri,
-                  images: formatImages(digestMopidyImages(store.getState().mopidy, images)),
-                });
-              } else {
-                store.dispatch(lastfmActions.getImages(uri));
-              }
-            });
-
-            if (itemsWithImages.length) {
-              store.dispatch(coreActions.itemsLoaded(itemsWithImages));
+            if (images) {
+              itemsWithImages.push({
+                uri,
+                images: formatImages(
+                  digestMopidyImages(store.getState().mopidy, images)
+                ),
+              });
+            } else {
+              store.dispatch(lastfmActions.getImages(uri));
             }
           });
+
+          if (itemsWithImages.length) {
+            store.dispatch(coreActions.itemsLoaded(itemsWithImages));
+          }
+        });
 
         next(action);
         break;
       }
 
-      case 'MOPIDY_GET_DIRECTORY':
+      case "MOPIDY_GET_DIRECTORY":
         const uri = action.uri ? decodeURIComponent(action.uri) : null;
         store.dispatch({
-          type: 'MOPIDY_DIRECTORY_LOADING',
+          type: "MOPIDY_DIRECTORY_LOADING",
           uri,
         });
 
@@ -1819,26 +1918,26 @@ const MopidyMiddleware = (function () {
           const playlistsToLoad = [];
 
           results.forEach((item) => {
-            if (item.__model__ === 'Track') {
+            if (item.__model__ === "Track") {
               tracks.push(formatTrack(item));
-            } else if (item.__model__ === 'Ref' && item.type === 'track') {
+            } else if (item.__model__ === "Ref" && item.type === "track") {
               tracks.push(formatTrack({ ...item, loading: true }));
               trackUrisToLoad.push(item.uri);
-            } else if (item.__model__ === 'Ref' && item.type === 'album') {
+            } else if (item.__model__ === "Ref" && item.type === "album") {
               subdirectories.push(formatAlbum({ ...item, loading: true }));
               subdirectoryImagesToLoad.push(item.uri);
-            } else if (item.__model__ === 'Ref' && item.type === 'artist') {
+            } else if (item.__model__ === "Ref" && item.type === "artist") {
               subdirectories.push(formatArtist({ ...item, loading: true }));
               subdirectoryImagesToLoad.push(item.uri);
-            } else if (item.__model__ === 'Ref' && item.type === 'playlist') {
+            } else if (item.__model__ === "Ref" && item.type === "playlist") {
               // Tidal moods and genres incorrectly marked as Playlist type
               if (
-                item.uri.indexOf('tidal:mood') > -1 ||
-                item.uri.indexOf('tidal:genre') > -1
+                item.uri.indexOf("tidal:mood") > -1 ||
+                item.uri.indexOf("tidal:genre") > -1
               ) {
                 subdirectories.push({
                   ...item,
-                  type: 'directory',
+                  type: "directory",
                 });
               } else {
                 subdirectories.push(formatPlaylist({ ...item, loading: true }));
@@ -1852,7 +1951,7 @@ const MopidyMiddleware = (function () {
           });
 
           store.dispatch({
-            type: 'MOPIDY_DIRECTORY_LOADED',
+            type: "MOPIDY_DIRECTORY_LOADED",
             directory: {
               uri,
               tracks,
@@ -1862,29 +1961,33 @@ const MopidyMiddleware = (function () {
 
           if (trackUrisToLoad.length) {
             console.info(`Loading ${trackUrisToLoad.length} track URIs`);
-            request(store, 'library.lookup', { uris: trackUrisToLoad })
-              .then((response) => {
-                const fullTrackObjects = Object.values(response).map(
-                  (t) => (t.length > 0 ? formatTrack(t[0]) : undefined),
+            request(store, "library.lookup", { uris: trackUrisToLoad }).then(
+              (response) => {
+                const fullTrackObjects = Object.values(response).map((t) =>
+                  t.length > 0 ? formatTrack(t[0]) : undefined
                 );
 
                 store.dispatch({
-                  type: 'MOPIDY_DIRECTORY_LOADED',
+                  type: "MOPIDY_DIRECTORY_LOADED",
                   directory: {
                     uri,
                     tracks: fullTrackObjects.filter((t) => t instanceof Object),
                   },
                 });
-              });
+              }
+            );
           }
 
           const imagesLoaded = new Promise((resolve) => {
             if (subdirectoryImagesToLoad.length) {
-              console.info(`Loading ${subdirectoryImagesToLoad.length} subdirectory URIs`);
-              request(store, 'library.getImages', { uris: subdirectoryImagesToLoad })
-                .then((response) => {
-                  resolve(response);
-                });
+              console.info(
+                `Loading ${subdirectoryImagesToLoad.length} subdirectory URIs`
+              );
+              request(store, "library.getImages", {
+                uris: subdirectoryImagesToLoad,
+              }).then((response) => {
+                resolve(response);
+              });
             } else {
               resolve({});
             }
@@ -1897,18 +2000,17 @@ const MopidyMiddleware = (function () {
               const toLoad = playlistsToLoad.length;
               let loaded = 0;
               playlistsToLoad.map((uri) => {
-                request(store, 'playlists.lookup', { uri })
-                  .then((playlist) => {
-                    playlists[uri] = formatPlaylist({
-                      name: playlist.name,
-                      uri: playlist.uri,
-                      tracks: formatTracks(playlist.tracks),
-                    });
-                    loaded += 1;
-                    if (loaded === toLoad) {
-                      resolve(playlists);
-                    }
-                  })
+                request(store, "playlists.lookup", { uri }).then((playlist) => {
+                  playlists[uri] = formatPlaylist({
+                    name: playlist.name,
+                    uri: playlist.uri,
+                    tracks: formatTracks(playlist.tracks),
+                  });
+                  loaded += 1;
+                  if (loaded === toLoad) {
+                    resolve(playlists);
+                  }
+                });
               });
             } else {
               resolve(playlists);
@@ -1916,11 +2018,12 @@ const MopidyMiddleware = (function () {
           });
 
           imagesLoaded.then((response) => {
-
             const subdirectoriesWithImages = subdirectories.map((subdir) => {
               let images = response[subdir.uri] || undefined;
               if (images) {
-                images = formatImages(digestMopidyImages(store.getState().mopidy, images));
+                images = formatImages(
+                  digestMopidyImages(store.getState().mopidy, images)
+                );
               }
               return {
                 ...subdir,
@@ -1929,52 +2032,62 @@ const MopidyMiddleware = (function () {
             });
 
             playlistsLoaded.then((playlists) => {
-              const subdirectoriesWithPlaylists = subdirectoriesWithImages.map((subdir) => {
-                const playlist = playlists[subdir.uri] || {};
-                return {
-                  ...subdir,
-                  ...playlist,
-                };
-              });
+              const subdirectoriesWithPlaylists = subdirectoriesWithImages.map(
+                (subdir) => {
+                  const playlist = playlists[subdir.uri] || {};
+                  return {
+                    ...subdir,
+                    ...playlist,
+                  };
+                }
+              );
 
               store.dispatch({
-                type: 'MOPIDY_DIRECTORY_LOADED',
+                type: "MOPIDY_DIRECTORY_LOADED",
                 directory: {
                   uri,
                   subdirectories: subdirectoriesWithPlaylists,
                 },
               });
-
             });
           });
         };
 
-        const getBrowse = () => request(store, 'library.browse', { uri })
-          .then((response) => processResults(response));
+        const getBrowse = () =>
+          request(store, "library.browse", { uri }).then((response) =>
+            processResults(response)
+          );
 
         if (uri) {
-          request(store, 'library.lookup', { uris: [uri] })
-            .then((response) => {
-              const {
-                [uri]: results = [],
-              } = response;
+          request(store, "library.lookup", { uris: [uri] }).then((response) => {
+            const { [uri]: results = [] } = response;
 
-              // Not all endpoints give us tracks/subdirectories to library.lookup
-              if (!results.length || uri.startsWith('file:') || uri.startsWith('ytmusic:')) {
-                console.info(`No 'library.lookup' results for ${uri}, trying 'library.browse'`);
-                getBrowse();
-              } else {
-                processResults(results);
-              }
-            });
+            // Not all endpoints give us tracks/subdirectories to library.lookup
+            if (
+              !results.length ||
+              uri.startsWith("file:") ||
+              uri.startsWith("ytmusic:")
+            ) {
+              console.info(
+                `No 'library.lookup' results for ${uri}, trying 'library.browse'`
+              );
+              getBrowse();
+            } else {
+              processResults(results);
+            }
+          });
         } else {
           getBrowse();
         }
         break;
 
-      case 'MOPIDY_DIRECTORY':
+      case "MOPIDY_DIRECTORY":
         if (store.getState().ui.allow_reporting && action.data) {
-          ReactGA.event({ category: 'Directory', action: 'Load', label: action.data.uri });
+          ReactGA.event({
+            category: "Directory",
+            action: "Load",
+            label: action.data.uri,
+          });
         }
         next(action);
         break;
@@ -1982,18 +2095,22 @@ const MopidyMiddleware = (function () {
       /**
        * My Music libraries
        */
-      case 'MOPIDY_GET_LIBRARY_ARTISTS':
-        store.dispatch(uiActions.startProcess(action.type, { notification: false }));
+      case "MOPIDY_GET_LIBRARY_ARTISTS":
+        store.dispatch(
+          uiActions.startProcess(action.type, { notification: false })
+        );
 
-        request(store, 'library.browse', { uri: action.uri })
-          .then((raw_response) => {
+        request(store, "library.browse", { uri: action.uri }).then(
+          (raw_response) => {
             // No items in our library
             if (!raw_response.length) {
-              store.dispatch(coreActions.libraryLoaded({
-                uri: 'mopidy:library:artists',
-                type: 'artists',
-                items_uris: [],
-              }));
+              store.dispatch(
+                coreActions.libraryLoaded({
+                  uri: "mopidy:library:artists",
+                  type: "artists",
+                  items_uris: [],
+                })
+              );
               store.dispatch(uiActions.processFinished(action.type));
             }
 
@@ -2001,171 +2118,185 @@ const MopidyMiddleware = (function () {
             // See https://github.com/mopidy/mopidy-local-sqlite/issues/39
             const response = raw_response.map((artist) => ({
               ...formatArtist(artist),
-              uri: artist.uri.replace('local:directory?albumartist=', '').replace('local:directory?artist=', ''),
+              uri: artist.uri
+                .replace("local:directory?albumartist=", "")
+                .replace("local:directory?artist=", ""),
             }));
 
             store.dispatch(coreActions.itemsLoaded(response));
-            store.dispatch(coreActions.libraryLoaded({
-              uri: action.uri,
-              type: 'artists',
-              items_uris: arrayOf('uri', response),
-            }));
+            store.dispatch(
+              coreActions.libraryLoaded({
+                uri: action.uri,
+                type: "artists",
+                items_uris: arrayOf("uri", response),
+              })
+            );
             store.dispatch(uiActions.processFinished(action.type));
-          });
+          }
+        );
         break;
 
-      case 'MOPIDY_GET_LIBRARY_MOODS': {
-        store.dispatch(uiActions.startProcess(action.type, { notification: false }));
+      case "MOPIDY_GET_LIBRARY_MOODS": {
+        store.dispatch(
+          uiActions.startProcess(action.type, { notification: false })
+        );
 
-        request(store, 'library.browse', { uri: action.uri })
-          .then((response) => {
+        request(store, "library.browse", { uri: action.uri }).then(
+          (response) => {
             const moods = response.map((mood) => ({
               ...formatSimpleObject(mood),
-              type: 'mood',
+              type: "mood",
             }));
 
             store.dispatch(
-              uiActions.updateProcess(
-                action.type,
-                {
-                  total: moods.length,
-                  remaining: moods.length,
-                },
-              ),
+              uiActions.updateProcess(action.type, {
+                total: moods.length,
+                remaining: moods.length,
+              })
             );
 
-            store.dispatch(coreActions.libraryLoaded({
-              uri: action.uri,
-              type: 'moods',
-              items_uris: arrayOf('uri', moods),
-            }));
+            store.dispatch(
+              coreActions.libraryLoaded({
+                uri: action.uri,
+                type: "moods",
+                items_uris: arrayOf("uri", moods),
+              })
+            );
             store.dispatch(coreActions.itemsLoaded(moods));
             store.dispatch(uiActions.stopLoading(action.uri));
             store.dispatch(uiActions.processFinished(action.type));
-          });
+          }
+        );
         break;
       }
 
-      case 'MOPIDY_GET_LIBRARY_FEATURED_PLAYLISTS': {
-        store.dispatch(uiActions.startProcess(action.type, { notification: false }));
+      case "MOPIDY_GET_LIBRARY_FEATURED_PLAYLISTS": {
+        store.dispatch(
+          uiActions.startProcess(action.type, { notification: false })
+        );
 
-        request(store, 'library.browse', { uri: action.uri })
-          .then((response) => {
+        request(store, "library.browse", { uri: action.uri }).then(
+          (response) => {
             const moods = response.map((mood) => ({
               ...formatSimpleObject(mood),
-              type: 'playlist_group',
+              type: "playlist_group",
             }));
 
             store.dispatch(
-              uiActions.updateProcess(
-                action.type,
-                {
-                  total: moods.length,
-                  remaining: moods.length,
-                },
-              ),
+              uiActions.updateProcess(action.type, {
+                total: moods.length,
+                remaining: moods.length,
+              })
             );
 
-            store.dispatch(coreActions.libraryLoaded({
-              uri: action.uri,
-              type: 'featured_playlists',
-              items_uris: arrayOf('uri', moods),
-            }));
+            store.dispatch(
+              coreActions.libraryLoaded({
+                uri: action.uri,
+                type: "featured_playlists",
+                items_uris: arrayOf("uri", moods),
+              })
+            );
             store.dispatch(coreActions.itemsLoaded(moods));
             store.dispatch(uiActions.stopLoading(action.uri));
             store.dispatch(uiActions.processFinished(action.type));
-          });
+          }
+        );
         break;
       }
 
-      case 'MOPIDY_GET_PLAYLIST_GROUP': {
+      case "MOPIDY_GET_PLAYLIST_GROUP": {
         const processKey = `playlist_group_${action.uri}`;
         const decodedUri = action.uri ? decodeURIComponent(action.uri) : null;
         const playlistGroup = formatPlaylistGroup({
           uri: decodedUri,
           loading: true,
         });
-        store.dispatch(uiActions.startProcess(
-          processKey,
-          { content: i18n('services.mopidy.loading_artwork') },
-        ));
+        store.dispatch(
+          uiActions.startProcess(processKey, {
+            content: i18n("services.mopidy.loading_artwork"),
+          })
+        );
         store.dispatch(coreActions.itemLoaded(playlistGroup));
-        request(store, 'library.browse', { uri: action.uri })
-          .then((browse) => {
-            const playlists = browse.map((item) => formatPlaylist({
+        request(store, "library.browse", { uri: action.uri }).then((browse) => {
+          const playlists = browse.map((item) =>
+            formatPlaylist({
               ...item,
               images: [], // Images is a playlist dependency, so this prevents triggering full load
-            }));
-            const playlists_uris = uniq(arrayOf('uri', playlists));
-            const allUris = [...playlists_uris];
-            store.dispatch(coreActions.itemLoaded({
+            })
+          );
+          const playlists_uris = uniq(arrayOf("uri", playlists));
+          const allUris = [...playlists_uris];
+          store.dispatch(
+            coreActions.itemLoaded({
               ...playlistGroup,
               loading: false,
               playlists_uris,
-            }));
-            store.dispatch(coreActions.itemsLoaded(playlists));
-            store.dispatch(
-              uiActions.updateProcess(
-                processKey,
-                {
-                  total: allUris.length,
-                  remaining: allUris.length,
-                },
-              ),
-            );
+            })
+          );
+          store.dispatch(coreActions.itemsLoaded(playlists));
+          store.dispatch(
+            uiActions.updateProcess(processKey, {
+              total: allUris.length,
+              remaining: allUris.length,
+            })
+          );
 
-            const run = () => {
-              if (allUris.length) {
-                const uris = allUris.splice(0, 5);
-                const processor = store.getState().ui.processes[processKey];
-                if (processor && processor.status === 'cancelling') {
-                  store.dispatch(uiActions.processCancelled(processKey));
-                  return;
-                }
-                store.dispatch(uiActions.updateProcess(processKey, { remaining: allUris.length }));
-
-                request(store, 'library.getImages', { uris })
-                  .then(
-                    (response) => {
-                      const withImages = uris.map((uri) => {
-                        let images = response[uri] || [];
-                        if (images) {
-                          images = formatImages(digestMopidyImages(store.getState().mopidy, images));
-                        }
-                        return {
-                          uri,
-                          images,
-                        };
-                      });
-                      store.dispatch(coreActions.itemsLoaded(withImages));
-                      run();
-                    },
-                  );
-              } else {
-                store.dispatch(uiActions.processFinished(processKey));
+          const run = () => {
+            if (allUris.length) {
+              const uris = allUris.splice(0, 5);
+              const processor = store.getState().ui.processes[processKey];
+              if (processor && processor.status === "cancelling") {
+                store.dispatch(uiActions.processCancelled(processKey));
+                return;
               }
-            };
+              store.dispatch(
+                uiActions.updateProcess(processKey, {
+                  remaining: allUris.length,
+                })
+              );
 
-            run();
-          });
+              request(store, "library.getImages", { uris }).then((response) => {
+                const withImages = uris.map((uri) => {
+                  let images = response[uri] || [];
+                  if (images) {
+                    images = formatImages(
+                      digestMopidyImages(store.getState().mopidy, images)
+                    );
+                  }
+                  return {
+                    uri,
+                    images,
+                  };
+                });
+                store.dispatch(coreActions.itemsLoaded(withImages));
+                run();
+              });
+            } else {
+              store.dispatch(uiActions.processFinished(processKey));
+            }
+          };
+
+          run();
+        });
         break;
       }
-      case 'MOPIDY_GET_LIBRARY_PLAYLISTS': {
-        store.dispatch(uiActions.startProcess(action.type, { notification: false }));
-        const scheme = action.uri.split(':')[0];
+      case "MOPIDY_GET_LIBRARY_PLAYLISTS": {
+        store.dispatch(
+          uiActions.startProcess(action.type, { notification: false })
+        );
+        const scheme = action.uri.split(":")[0];
 
-        request(store, 'playlists.asList').then((browseResponse) => {
-          const allUris = arrayOf('uri', browseResponse).filter((uri) => uri.startsWith(scheme));
+        request(store, "playlists.asList").then((browseResponse) => {
+          const allUris = arrayOf("uri", browseResponse).filter((uri) =>
+            uri.startsWith(scheme)
+          );
           const unloadedUris = [...allUris];
 
           store.dispatch(
-            uiActions.updateProcess(
-              action.type,
-              {
-                total: allUris.length,
-                remaining: unloadedUris.length,
-              },
-            ),
+            uiActions.updateProcess(action.type, {
+              total: allUris.length,
+              remaining: unloadedUris.length,
+            })
           );
 
           const run = () => {
@@ -2173,35 +2304,43 @@ const MopidyMiddleware = (function () {
               const uri = unloadedUris.splice(0, 1)[0];
               const processor = store.getState().ui.processes[action.type];
 
-              if (processor && processor.status === 'cancelling') {
+              if (processor && processor.status === "cancelling") {
                 store.dispatch(uiActions.processCancelled(action.type));
                 store.dispatch(uiActions.stopLoading(action.uri));
                 return;
               }
-              store.dispatch(uiActions.updateProcess(action.type, { remaining: unloadedUris.length }));
+              store.dispatch(
+                uiActions.updateProcess(action.type, {
+                  remaining: unloadedUris.length,
+                })
+              );
 
-              request(store, 'playlists.lookup', { uri }).then((lookupResponse) => {
-                if (lookupResponse) {
-                  const playlist = formatPlaylist({
-                    name: lookupResponse.name,
-                    uri: lookupResponse.uri,
-                    can_edit: true, // TODO: Confirm whether some are uneditable??
-                    last_modified: lookupResponse.last_modified,
-                    // Don't include simple tracks; they don't contain duration, artist, etc.
-                    tracks_total: lookupResponse?.tracks?.length || null,
-                  });
+              request(store, "playlists.lookup", { uri }).then(
+                (lookupResponse) => {
+                  if (lookupResponse) {
+                    const playlist = formatPlaylist({
+                      name: lookupResponse.name,
+                      uri: lookupResponse.uri,
+                      can_edit: true, // TODO: Confirm whether some are uneditable??
+                      last_modified: lookupResponse.last_modified,
+                      // Don't include simple tracks; they don't contain duration, artist, etc.
+                      tracks_total: lookupResponse?.tracks?.length || null,
+                    });
 
-                  store.dispatch(coreActions.itemLoaded(playlist));
+                    store.dispatch(coreActions.itemLoaded(playlist));
+                  }
+                  run();
                 }
-                run();
-              });
+              );
             } else {
               store.dispatch(uiActions.processFinished(action.type));
-              store.dispatch(coreActions.libraryLoaded({
-                uri: action.uri,
-                type: 'playlists',
-                items_uris: allUris,
-              }));
+              store.dispatch(
+                coreActions.libraryLoaded({
+                  uri: action.uri,
+                  type: "playlists",
+                  items_uris: allUris,
+                })
+              );
             }
           };
 
@@ -2210,127 +2349,143 @@ const MopidyMiddleware = (function () {
         break;
       }
 
-      case 'MOPIDY_GET_LIBRARY_ALBUMS':
-        store.dispatch(uiActions.startProcess(action.type, { notification: false }));
+      case "MOPIDY_GET_LIBRARY_ALBUMS":
+        store.dispatch(
+          uiActions.startProcess(action.type, { notification: false })
+        );
 
-        request(store, 'library.browse', { uri: action.uri })
-          .then((browseResponse) => {
-            const allUris = arrayOf('uri', browseResponse);
+        request(store, "library.browse", { uri: action.uri }).then(
+          (browseResponse) => {
+            const allUris = arrayOf("uri", browseResponse);
 
-            store.dispatch(uiActions.updateProcess(
-              action.type,
-              {
+            store.dispatch(
+              uiActions.updateProcess(action.type, {
                 remaining: allUris.length,
                 total: allUris.length,
-              },
-            ));
+              })
+            );
 
             const run = () => {
               if (allUris.length) {
                 const uris = allUris.splice(0, 10);
                 const processor = store.getState().ui.processes[action.type];
 
-                if (processor && processor.status === 'cancelling') {
+                if (processor && processor.status === "cancelling") {
                   store.dispatch(uiActions.processCancelled(action.type));
                   store.dispatch(uiActions.stopLoading(action.uri));
                   return;
                 }
-                store.dispatch(uiActions.updateProcess(action.type, { remaining: allUris.length }));
+                store.dispatch(
+                  uiActions.updateProcess(action.type, {
+                    remaining: allUris.length,
+                  })
+                );
 
-                request(store, 'library.lookup', { uris })
-                  .then(
-                    (lookupResponse) => {
-                      const libraryItems = [];
-                      indexToArray(lookupResponse).forEach(
-                        (tracks) => {
-                          if (tracks.length <= 0) {
-                            console.info('Ignoring item; no results in lookup');
-                            return;
-                          }
-
-                          libraryItems.push({
-                            artists: tracks[0].artists ? formatArtists(tracks[0].artists) : null,
-                            tracks: formatTracks(tracks),
-                            last_modified: tracks[0].last_modified,
-                            ...formatAlbum(tracks[0].album),
-                          });
-                        },
-                      );
-
-                      if (libraryItems.length) {
-                        store.dispatch(coreActions.itemsLoaded(libraryItems));
+                request(store, "library.lookup", { uris }).then(
+                  (lookupResponse) => {
+                    const libraryItems = [];
+                    indexToArray(lookupResponse).forEach((tracks) => {
+                      if (tracks.length <= 0) {
+                        console.info("Ignoring item; no results in lookup");
+                        return;
                       }
-                      run();
-                    },
-                  );
+
+                      libraryItems.push({
+                        artists: tracks[0].artists
+                          ? formatArtists(tracks[0].artists)
+                          : null,
+                        tracks: formatTracks(tracks),
+                        last_modified: tracks[0].last_modified,
+                        ...formatAlbum(tracks[0].album),
+                      });
+                    });
+
+                    if (libraryItems.length) {
+                      store.dispatch(coreActions.itemsLoaded(libraryItems));
+                    }
+                    run();
+                  }
+                );
               } else {
                 store.dispatch(uiActions.processFinished(action.type));
-                store.dispatch(coreActions.libraryLoaded({
-                  uri: action.uri,
-                  type: 'albums',
-                  items_uris: arrayOf('uri', browseResponse),
-                }));
+                store.dispatch(
+                  coreActions.libraryLoaded({
+                    uri: action.uri,
+                    type: "albums",
+                    items_uris: arrayOf("uri", browseResponse),
+                  })
+                );
               }
             };
 
             run();
-          });
+          }
+        );
         break;
 
-      case 'MOPIDY_GET_LIBRARY_TRACKS':
-        store.dispatch(uiActions.startProcess(action.type, { notification: false }));
+      case "MOPIDY_GET_LIBRARY_TRACKS":
+        store.dispatch(
+          uiActions.startProcess(action.type, { notification: false })
+        );
 
-        request(store, 'library.browse', { uri: action.uri })
-          .then((browseResponse) => {
-            const allUris = arrayOf('uri', browseResponse);
+        request(store, "library.browse", { uri: action.uri }).then(
+          (browseResponse) => {
+            const allUris = arrayOf("uri", browseResponse);
 
-            store.dispatch(uiActions.updateProcess(
-              action.type,
-              {
+            store.dispatch(
+              uiActions.updateProcess(action.type, {
                 remaining: allUris.length,
                 total: allUris.length,
-              },
-            ));
+              })
+            );
 
             const run = () => {
               if (allUris.length) {
                 const uris = allUris.splice(0, 100);
                 const processor = store.getState().ui.processes[action.type];
 
-                if (processor && processor.status === 'cancelling') {
+                if (processor && processor.status === "cancelling") {
                   store.dispatch(uiActions.processCancelled(action.type));
-                  store.dispatch(uiActions.stopLoading('mopidy:library:tracks'));
+                  store.dispatch(
+                    uiActions.stopLoading("mopidy:library:tracks")
+                  );
                   return;
                 }
-                store.dispatch(uiActions.updateProcess(action.type, { remaining: allUris.length }));
+                store.dispatch(
+                  uiActions.updateProcess(action.type, {
+                    remaining: allUris.length,
+                  })
+                );
 
-                request(store, 'library.lookup', { uris })
-                  .then(
-                    (lookupResponse) => {
-                      const libraryItems = compact(
-                        indexToArray(lookupResponse).map(
-                          (results) => (results.length ? formatTrack(results[0]) : null),
-                        ),
-                      );
+                request(store, "library.lookup", { uris }).then(
+                  (lookupResponse) => {
+                    const libraryItems = compact(
+                      indexToArray(lookupResponse).map((results) =>
+                        results.length ? formatTrack(results[0]) : null
+                      )
+                    );
 
-                      if (libraryItems.length) {
-                        store.dispatch(coreActions.itemsLoaded(libraryItems));
-                      }
-                      run();
-                    },
-                  );
+                    if (libraryItems.length) {
+                      store.dispatch(coreActions.itemsLoaded(libraryItems));
+                    }
+                    run();
+                  }
+                );
               } else {
                 store.dispatch(uiActions.processFinished(action.type));
-                store.dispatch(coreActions.libraryLoaded({
-                  uri: action.uri,
-                  type: 'tracks',
-                  items_uris: arrayOf('uri', browseResponse),
-                }));
+                store.dispatch(
+                  coreActions.libraryLoaded({
+                    uri: action.uri,
+                    type: "tracks",
+                    items_uris: arrayOf("uri", browseResponse),
+                  })
+                );
               }
             };
 
             run();
-          });
+          }
+        );
         break;
 
       default:
@@ -2338,6 +2493,6 @@ const MopidyMiddleware = (function () {
         break;
     }
   };
-}());
+})();
 
 export default MopidyMiddleware;
